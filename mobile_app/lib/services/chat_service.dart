@@ -1,0 +1,216 @@
+/*
+ * Samuel Bulnes
+ * Senior Project
+ * Chat Service
+ * Manages chat creation, messaging, and real-time message streaming with Firestore
+ */
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/chat_model.dart';
+import '../models/message_model.dart';
+
+//***********************************************************************************
+// Chat service that handles all chat-related operations with Firestore
+class ChatService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  //*********************************************************************************
+  // CREATE OR FETCH CHAT BETWEEN TWO USERS
+  // Ensures only ONE chat exists per user pair (no duplicates)
+
+  Future<String> getOrCreateChat({
+    required String currentUserId,
+    required String currentUserName,
+    required String otherUserId,
+    required String otherUserName,
+    String? jobId,     // Optional: link chat to a specific job/request
+    String? jobTitle,  // Optional: title of the job
+  }) async {
+    try {
+      // Look for existing chats where the current user is a participant
+      final existingChat = await _firestore
+          .collection('chats')
+          .where('participantIds', arrayContains: currentUserId)
+          .get();
+
+      // Check if any of these chats include the other user as well
+      for (var doc in existingChat.docs) {
+        List<String> participants =
+            List<String>.from(doc.data()['participantIds']);
+
+        if (participants.contains(otherUserId)) {
+          print('Existing chat found: ${doc.id}');
+          return doc.id; // Return ID of existing chat
+        }
+      }
+
+      // No existing chat -> Create a new chat document
+      final chatData = {
+        'participantIds': [currentUserId, otherUserId],
+        'participantNames': {
+          currentUserId: currentUserName,
+          otherUserId: otherUserName,
+        },
+        'jobId': jobId,
+        'jobTitle': jobTitle,
+        'lastMessage': 'Chat iniciado', // Initial system message
+        'lastSenderId': currentUserId,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      final newChat = await _firestore.collection('chats').add(chatData);
+
+      print('New chat created: ${newChat.id}');
+      return newChat.id;
+
+    } catch (e) {
+      print('Error creating/fetching chat: $e');
+      rethrow;
+    }
+  }
+
+  //*********************************************************************************
+  // SEND MESSAGE
+  // Creates new message document + updates chat with last message info
+  Future<void> sendMessage({
+    required String chatId,
+    required String senderId,
+    required String senderName,
+    required String text,
+  }) async {
+    try {
+      final messageData = {
+        'chatId': chatId,
+        'senderId': senderId,
+        'senderName': senderName,
+        'text': text,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false, // All new messages start as unread
+      };
+
+      // Store new message in Firestore
+      await _firestore.collection('messages').add(messageData);
+
+      // Update "lastMessage" info inside the chat document
+      await _firestore.collection('chats').doc(chatId).update({
+        'lastMessage': text,
+        'lastSenderId': senderId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Message saved to Firestore');
+
+    } catch (e) {
+      print('Error sending message: $e');
+      rethrow;
+    }
+  }
+
+  //*********************************************************************************
+  // REAL-TIME MESSAGE STREAM
+  // Listens to messages for a specific chat using Firestore snapshots
+  Stream<List<Message>> getMessages(String chatId) {
+    return _firestore
+        .collection('messages')
+        .where('chatId', isEqualTo: chatId)
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Message.fromFirestore(doc)).toList();
+    });
+  }
+
+  //*********************************************************************************
+  // REAL-TIME LIST OF CHATS FOR A USER
+  // Returns user's chats sorted by activity (updatedAt DESC)
+  Stream<List<Chat>> getUserChats(String userId) {
+    return _firestore
+        .collection('chats')
+        .where('participantIds', arrayContains: userId)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Chat.fromFirestore(doc)).toList();
+    });
+  }
+
+  //*********************************************************************************
+  // MARK MESSAGES AS READ
+  // Marks all messages in a chat NOT sent by current user as "read"
+
+  Future<void> markMessagesAsRead(String chatId, String userId) async {
+    try {
+      // Query all unread messages not sent by this user
+      final unreadMessages = await _firestore
+          .collection('messages')
+          .where('chatId', isEqualTo: chatId)
+          .where('senderId', isNotEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      // Use batch update for efficiency
+      final batch = _firestore.batch();
+
+      for (var doc in unreadMessages.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+
+      await batch.commit();
+      print('Messages marked as read');
+
+    } catch (e) {
+      print('Error marking messages as read: $e');
+    }
+  }
+
+  //*********************************************************************************
+  // GET UNREAD MESSAGE COUNT
+  // Useful for badges, notifications, and unread indicators
+
+  Future<int> getUnreadCount(String chatId, String userId) async {
+    try {
+      final unreadMessages = await _firestore
+          .collection('messages')
+          .where('chatId', isEqualTo: chatId)
+          .where('senderId', isNotEqualTo: userId)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      return unreadMessages.docs.length;
+
+    } catch (e) {
+      print('Error counting unread messages: $e');
+      return 0;
+    }
+  }
+
+  //*********************************************************************************
+  // DELETE CHAT COMPLETELY
+  // Deletes all messages + removes chat document
+  // Useful for admin or user cleanup
+  Future<void> deleteChat(String chatId) async {
+    try {
+      // Delete all messages first
+      final messages = await _firestore
+          .collection('messages')
+          .where('chatId', isEqualTo: chatId)
+          .get();
+
+      final batch = _firestore.batch();
+
+      for (var doc in messages.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // Delete chat document
+      batch.delete(_firestore.collection('chats').doc(chatId));
+
+      await batch.commit();
+      print('Chat deleted successfully');
+
+    } catch (e) {
+      print('Error deleting chat: $e');
+    }
+  }
+}

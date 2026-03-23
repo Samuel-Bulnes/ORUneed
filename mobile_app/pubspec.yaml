@@ -1,0 +1,61 @@
+# Samuel Bulnes
+# Senior Project
+# Pubspec Configuration
+# Defines the app name, dependencies, and Flutter settings
+
+# ***********************************************************************************
+# App package name (used internally by Flutter)
+name: mobile_app
+
+# App description shown in package info
+description: "iNeed - University student help network"
+
+# Prevent publishing this app to pub.dev
+publish_to: 'none'
+
+# App version (major.minor.patch+build)
+version: 1.0.0+1
+
+# Dart SDK version constraint
+environment:
+  sdk: ^3.7.2
+
+# ***********************************************************************************
+# Dependencies - External packages used by the app
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  
+  # Firebase
+  firebase_core: ^3.10.0
+  firebase_auth: ^5.3.5
+  cloud_firestore: ^5.6.0
+  
+  # Socket.io
+  socket_io_client: ^2.0.3+1
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # UI
+  google_fonts: ^6.2.1
+  
+  # Utils
+  intl: ^0.19.0
+
+  #images
+  image_picker: ^1.0.7 
+
+# ***********************************************************************************
+# Dev_Dependencies - Packages only used during development
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+# ***********************************************************************************
+# Flutter configuration
+flutter:
+  uses-material-design: true

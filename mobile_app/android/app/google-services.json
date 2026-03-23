@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "588133544931",
+    "project_id": "ineed-oru-1",
+    "storage_bucket": "ineed-oru-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:588133544931:android:185da84692012f25d266d6",
+        "android_client_info": {
+          "package_name": "com.bulnestech.ineed.mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnvsLgx-wXWWnpbMRoFdMmuv6wDc3bAIs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:588133544931:android:6b4191a2eb51f0dad266d6",
+        "android_client_info": {
+          "package_name": "com.example.mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnvsLgx-wXWWnpbMRoFdMmuv6wDc3bAIs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
