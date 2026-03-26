@@ -139,6 +139,30 @@ class FirestoreService {
   }
 
   //***********************************************************************************
+  // Get completed or in-progress jobs (user's history)
+  // Returns jobs the user has accepted (acceptedById) or posted (userId)
+  // with status 'in_progress' or 'completed'
+  Stream<List<JobModel>> getUserHistory(String userId) {
+    return _firestore
+        .collection('jobs')
+        .snapshots()
+        .map((snapshot) {
+      // Get all jobs where user is either the poster or acceptor
+      final userJobs = snapshot.docs
+          .map((doc) => JobModel.fromMap(doc.data()))
+          .where((job) =>
+              (job.userId == userId || job.acceptedById == userId) &&
+              (job.status == 'in_progress' || job.status == 'completed'))
+          .toList();
+
+      // Sort by creation time: newest first
+      userJobs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return userJobs;
+    });
+  }
+
+  //***********************************************************************************
   // Get Job by ID
   // Fetches job document only once (not a stream)
   Future<JobModel?> getJob(String jobId) async {
