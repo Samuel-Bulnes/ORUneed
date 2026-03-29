@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../services/chat_service.dart';
@@ -20,6 +21,7 @@ class ChatScreen extends StatefulWidget {
   final String chatId;
   final String otherUserId;
   final String otherUserName;
+  final String? jobId;
   final String? jobTitle;
 
   const ChatScreen({
@@ -27,6 +29,7 @@ class ChatScreen extends StatefulWidget {
     required this.chatId,
     required this.otherUserId,
     required this.otherUserName,
+    this.jobId,
     this.jobTitle,
   }) : super(key: key);
 
@@ -51,6 +54,10 @@ class _ChatScreenState extends State<ChatScreen> {
   // Typing indicator state
   bool _isTyping = false;
   Timer? _typingTimer;
+
+  // Temporary completion survey state
+  int _selectedSurveyRating = 5;
+  bool _isSubmittingCompletion = false;
   
   // Stream subscriptions for real-time updates
   StreamSubscription? _messageSubscription;
@@ -181,101 +188,392 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     //**********************************************************************************
-    return Scaffold(
-      backgroundColor: const Color(0xFFE5E5E5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1B4B),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Display other user's name
-            Text(
-              widget.otherUserName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: _chatService.getChatStream(widget.chatId),
+      builder: (context, chatSnapshot) {
+        final chatData = chatSnapshot.data?.data() ?? {};
+        final participantIds = List<String>.from(
+          chatData['participantIds'] ?? [_currentUserId!, widget.otherUserId],
+        );
+        final confirmations =
+            Map<String, dynamic>.from(chatData['completionConfirmations'] ?? {});
+        final completionRequested = chatData['completionRequested'] == true;
+        final requestedById = chatData['completionRequestedBy'] as String?;
+        final currentConfirmed = confirmations[_currentUserId!] == true;
+        final bothConfirmed = participantIds.isNotEmpty &&
+            participantIds.every((id) => confirmations[id] == true);
+
+        final effectiveJobId = (chatData['jobId'] as String?) ?? widget.jobId;
+        final hasJobContext =
+            effectiveJobId != null && effectiveJobId.trim().isNotEmpty;
+
+        final requestedByName = requestedById == _currentUserId
+            ? 'You'
+            : widget.otherUserName;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFE5E5E5),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF1E1B4B),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-            // Display job title if this chat is related to a job
-            if (widget.jobTitle != null)
-              Text(
-                widget.jobTitle!,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Display other user's name
+                Text(
+                  widget.otherUserName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                  ),
                 ),
-              ),
-          ],
-        ),
-      ),
-
-      //**********************************************************************************
-      body: Column(
-        children: [
-          // Messages list area
-          Expanded(
-            child: StreamBuilder<List<Message>>(
-              // Listen to real-time message updates from Firestore
-              stream: _chatService.getMessages(widget.chatId),
-              builder: (context, snapshot) {
-                // Show loading indicator while fetching messages
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                // Handle errors
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final messages = snapshot.data ?? [];
-
-                // Show empty state if no messages
-                if (messages.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'Start the conversation!',
-                      style: TextStyle(color: Colors.grey[600]),
+                // Display job title if this chat is related to a job
+                if (widget.jobTitle != null)
+                  Text(
+                    widget.jobTitle!,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
                     ),
-                  );
-                }
-
-                // Auto-scroll to bottom when new messages arrive
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _scrollToBottom();
-                });
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  // Add extra item for typing indicator if active
-                  itemCount: messages.length + (_isTyping ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    // Show typing indicator at the end if other user is typing
-                    if (index == messages.length && _isTyping) {
-                      return _buildTypingIndicator();
-                    }
-
-                    final message = messages[index];
-                    // Check if message is from current user
-                    final isMe = message.senderId == _currentUserId;
-
-                    return _buildMessageBubble(message, isMe);
-                  },
-                );
-              },
+                  ),
+              ],
             ),
+            actions: [
+              if (hasJobContext)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: TextButton(
+                    onPressed: (bothConfirmed ||
+                            currentConfirmed ||
+                            _isSubmittingCompletion)
+                        ? null
+                        : () => _showCompletionDialog(
+                              completionRequested: completionRequested,
+                            ),
+                    child: Text(
+                      bothConfirmed
+                          ? 'Completed'
+                          : (currentConfirmed ? 'Confirmed' : 'Complete'),
+                      style: TextStyle(
+                        color: bothConfirmed ? Colors.greenAccent : Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
 
-          // Message input area
-          _buildMessageInput(),
+          //**********************************************************************************
+          body: Column(
+            children: [
+              if (hasJobContext && (completionRequested || bothConfirmed))
+                _buildCompletionStatus(
+                  completionRequested: completionRequested,
+                  bothConfirmed: bothConfirmed,
+                  currentConfirmed: currentConfirmed,
+                  requestedByName: requestedByName,
+                ),
+
+              // Messages list area
+              Expanded(
+                child: StreamBuilder<List<Message>>(
+                  // Listen to real-time message updates from Firestore
+                  stream: _chatService.getMessages(widget.chatId),
+                  builder: (context, snapshot) {
+                    // Show loading indicator while fetching messages
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    // Handle errors
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final messages = snapshot.data ?? [];
+
+                    // Show empty state if no messages
+                    if (messages.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Start the conversation!',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      );
+                    }
+
+                    // Auto-scroll to bottom when new messages arrive
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollToBottom();
+                    });
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      // Add extra item for typing indicator if active
+                      itemCount: messages.length + (_isTyping ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        // Show typing indicator at the end if other user is typing
+                        if (index == messages.length && _isTyping) {
+                          return _buildTypingIndicator();
+                        }
+
+                        final message = messages[index];
+                        // Check if message is from current user
+                        final isMe = message.senderId == _currentUserId;
+
+                        return _buildMessageBubble(message, isMe);
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              // Message input area
+              _buildMessageInput(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  //**********************************************************************************
+  // Completion status card shown at top of chat when confirmation flow is active
+  Widget _buildCompletionStatus({
+    required bool completionRequested,
+    required bool bothConfirmed,
+    required bool currentConfirmed,
+    required String requestedByName,
+  }) {
+    if (bothConfirmed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        color: Colors.green[100],
+        child: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Trabajo completado por ambas partes.',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (completionRequested && !currentConfirmed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        color: Colors.orange[100],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Trabajo realizado reportado por $requestedByName.',
+              style: const TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Encuesta temporal: ¿Cómo estuvo el trabajo?',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('Calificación:'),
+                const SizedBox(width: 8),
+                DropdownButton<int>(
+                  value: _selectedSurveyRating,
+                  items: [1, 2, 3, 4, 5]
+                      .map(
+                        (value) => DropdownMenuItem<int>(
+                          value: value,
+                          child: Text('$value/5'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _selectedSurveyRating = value);
+                  },
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: _isSubmittingCompletion
+                      ? null
+                      : () => _submitCompletion(
+                            rating: _selectedSurveyRating,
+                            completionRequested: true,
+                          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E1B4B),
+                  ),
+                  child: const Text(
+                    'Confirmar',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Colors.blue[100],
+      child: const Row(
+        children: [
+          Icon(Icons.hourglass_bottom, color: Colors.blue),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Ya confirmaste. Esperando confirmación de la otra persona.',
+              style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  //**********************************************************************************
+  // Completion confirmation dialog with temporary rating
+  Future<void> _showCompletionDialog({required bool completionRequested}) async {
+    int tempRating = _selectedSurveyRating;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Confirmar trabajo realizado'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    completionRequested
+                        ? 'Tu confirmación cuenta para cerrar el trabajo.'
+                        : 'Se notificará a la otra persona para que también confirme.',
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Encuesta temporal: ¿Cómo estuvo el trabajo?'),
+                  const SizedBox(height: 8),
+                  DropdownButton<int>(
+                    value: tempRating,
+                    items: [1, 2, 3, 4, 5]
+                        .map(
+                          (value) => DropdownMenuItem<int>(
+                            value: value,
+                            child: Text('$value/5'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setDialogState(() => tempRating = value);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _submitCompletion(
+                      rating: tempRating,
+                      completionRequested: completionRequested,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E1B4B),
+                  ),
+                  child: const Text(
+                    'Confirmar',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  //**********************************************************************************
+  // Submits completion confirmation and only completes job when both sides confirm
+  Future<void> _submitCompletion({
+    required int rating,
+    required bool completionRequested,
+  }) async {
+    if (_currentUserId == null) return;
+
+    setState(() => _isSubmittingCompletion = true);
+
+    try {
+      if (!completionRequested) {
+        await _chatService.requestJobCompletion(
+          chatId: widget.chatId,
+          userId: _currentUserId!,
+        );
+      }
+
+      await _chatService.confirmJobCompletion(
+        chatId: widget.chatId,
+        userId: _currentUserId!,
+        rating: rating,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Confirmación guardada.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al confirmar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingCompletion = false);
+      }
+    }
   }
 
   //**********************************************************************************

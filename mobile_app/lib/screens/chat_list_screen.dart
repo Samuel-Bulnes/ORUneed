@@ -158,6 +158,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 chatId: chat.id,
                 otherUserId: chat.getOtherUserId(_currentUserId!),
                 otherUserName: userName,
+                jobId: chat.jobId,
                 jobTitle: chat.jobTitle,
               ),
             ),

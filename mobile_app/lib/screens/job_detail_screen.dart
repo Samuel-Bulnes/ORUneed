@@ -413,6 +413,7 @@ class JobDetailScreen extends StatelessWidget {
               chatId: chatId,
               otherUserId: job.userId,
               otherUserName: job.userName,
+              jobId: job.id,
               jobTitle: job.title,
             ),
           ),
