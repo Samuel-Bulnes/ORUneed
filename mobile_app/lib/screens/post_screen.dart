@@ -141,6 +141,30 @@ class _PostScreenState extends State<PostScreen> {
     // Validate all form fields
     if (!_formKey.currentState!.validate()) return;
 
+    // Ask for confirmation before publishing
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Publish job'),
+        content: const Text('Are you sure you want to publish this job?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Publish',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() => _isLoading = true);
 
     try {
@@ -194,46 +218,9 @@ class _PostScreenState extends State<PostScreen> {
         ),
       );
 
-      // Calculate commission (10%) and total cost
-      final commission = job.price * 0.10;
-      final total = job.price + commission;
-
-      // Display summary dialog with cost breakdown
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('🎉 Posted!'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Title: ${job.title}'),
-              const SizedBox(height: 8),
-              Text('You will pay: \$${job.price.toStringAsFixed(2)}'),
-              Text('Commission (10%): \$${commission.toStringAsFixed(2)}'),
-              const Divider(),
-              Text(
-                'Total: \$${total.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              if (_selectedImages.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text('Images: ${_selectedImages.length}'),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-
     } catch (e) {
       if (!mounted) return;
-      
+
       // Show error message if submission fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -502,42 +489,6 @@ class _PostScreenState extends State<PostScreen> {
               ),
               const SizedBox(height: 8),
 
-              //***********************************************************************************
-              //  Cost breakdown summary (shown when price is entered)
-              if (_priceController.text.isNotEmpty &&
-                  double.tryParse(_priceController.text) != null)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    border: Border.all(color: AppColors.primary),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Service: \$${_priceController.text}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      // Display 10% platform commission
-                      Text(
-                        'Commission (10%): \$${(double.parse(_priceController.text) * 0.10).toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const Divider(),
-                      // Show total with commission included
-                      Text(
-                        'Total: \$${(double.parse(_priceController.text) * 1.10).toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               const SizedBox(height: 32),
 
               //***********************************************************************************
