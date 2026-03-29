@@ -204,16 +204,22 @@ class JobDetailScreen extends StatelessWidget {
                                 // Update job status in Firestore
                                 await firestoreService.acceptJob(job.id, currentUserId!);
 
-                                // Show success message and return to previous screen
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('✅ Job accepted!'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                  Navigator.of(context).pop();
-                                }
+                                if (!context.mounted) return;
+
+                                // Show success and immediately start/open chat.
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('✅ Job accepted! Opening chat...'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                await _createChat(
+                                  context,
+                                  chatService,
+                                  currentUserId,
+                                  currentUserName,
+                                );
                               } catch (e) {
                                 // Handle errors (e.g., network issues, permission errors)
                                 if (context.mounted) {
