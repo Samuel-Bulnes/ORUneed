@@ -46,6 +46,11 @@ class ChatService {
             List<String>.from(doc.data()['participantIds']);
 
         if (participants.contains(otherUserId)) {
+          await doc.reference.update({
+            'deletedBy': FieldValue.arrayRemove([currentUserId]),
+            'hiddenFor': FieldValue.arrayRemove([currentUserId]),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
           print('Existing chat found: ${doc.id}');
           return doc.id; // Return ID of existing chat
         }
@@ -103,6 +108,8 @@ class ChatService {
       await _firestore.collection('chats').doc(chatId).update({
         'lastMessage': text,
         'lastSenderId': senderId,
+        'deletedBy': FieldValue.delete(),
+        'hiddenFor': FieldValue.delete(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -127,6 +134,8 @@ class ChatService {
         'completionRequestedBy': userId,
         'completionRequestedAt': FieldValue.serverTimestamp(),
         'completionConfirmations.$userId': true,
+        'deletedBy': FieldValue.delete(),
+        'hiddenFor': FieldValue.delete(),
         'lastMessage': 'Trabajo marcado como realizado',
         'lastSenderId': userId,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -169,6 +178,8 @@ class ChatService {
           'completionRequested': true,
           'completionConfirmations.$userId': true,
           'completionRatings.$userId': rating,
+          'deletedBy': FieldValue.delete(),
+          'hiddenFor': FieldValue.delete(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
 
@@ -237,7 +248,15 @@ class ChatService {
         .orderBy('updatedAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Chat.fromFirestore(doc)).toList();
+      return snapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            final hiddenFor = List<String>.from(data['hiddenFor'] ?? const []);
+            final deletedBy = List<String>.from(data['deletedBy'] ?? const []);
+            return !hiddenFor.contains(userId) && !deletedBy.contains(userId);
+          })
+          .map((doc) => Chat.fromFirestore(doc))
+          .toList();
     });
   }
 
@@ -292,31 +311,74 @@ class ChatService {
   }
 
   //*********************************************************************************
-  // DELETE CHAT COMPLETELY
-  // Deletes all messages + removes chat document
-  // Useful for admin or user cleanup
-  Future<void> deleteChat(String chatId) async {
+  // DELETE CHAT FOR CURRENT USER
+  // First removal hides the chat for that user. When both users remove it, the
+  // chat and its messages are permanently deleted.
+  Future<bool> deleteChat(String chatId, String userId) async {
+    final chatRef = _firestore.collection('chats').doc(chatId);
+    bool deletePermanently = false;
+
     try {
-      // Delete all messages first
-      final messages = await _firestore
-          .collection('messages')
-          .where('chatId', isEqualTo: chatId)
-          .get();
+      await _firestore.runTransaction((transaction) async {
+        final chatSnap = await transaction.get(chatRef);
+        if (!chatSnap.exists) {
+          throw Exception('Chat not found');
+        }
 
-      final batch = _firestore.batch();
+        final chatData = chatSnap.data() as Map<String, dynamic>;
+        final participantIds =
+            List<String>.from(chatData['participantIds'] ?? const []);
+        final deletedBy = {
+          ...List<String>.from(chatData['deletedBy'] ?? const []),
+          ...List<String>.from(chatData['hiddenFor'] ?? const []),
+        };
 
-      for (var doc in messages.docs) {
-        batch.delete(doc.reference);
+        if (!participantIds.contains(userId)) {
+          throw Exception('User is not part of this chat');
+        }
+
+        deletedBy.add(userId);
+        deletePermanently =
+            participantIds.isNotEmpty && participantIds.every(deletedBy.contains);
+
+        if (deletePermanently) {
+          transaction.update(chatRef, {
+            'deletedBy': deletedBy.toList(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'pendingPermanentDelete': true,
+          });
+          return;
+        }
+
+        transaction.update(chatRef, {
+          'deletedBy': deletedBy.toList(),
+          'hiddenFor': FieldValue.delete(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      if (deletePermanently) {
+        final messages = await _firestore
+            .collection('messages')
+            .where('chatId', isEqualTo: chatId)
+            .get();
+
+        final batch = _firestore.batch();
+        for (final doc in messages.docs) {
+          batch.delete(doc.reference);
+        }
+        batch.delete(chatRef);
+        await batch.commit();
+        print('Chat permanently deleted: $chatId');
+        return true;
       }
 
-      // Delete chat document
-      batch.delete(_firestore.collection('chats').doc(chatId));
-
-      await batch.commit();
-      print('Chat deleted successfully');
+      print('Chat removed for user: $userId');
+      return false;
 
     } catch (e) {
       print('Error deleting chat: $e');
+      rethrow;
     }
   }
 }
