@@ -32,6 +32,7 @@ class ChatService {
     required String otherUserName,
     String? jobId,     // Optional: link chat to a specific job/request
     String? jobTitle,  // Optional: title of the job
+    String? workerId,  // The user who does the job (acceptedById)
   }) async {
     try {
       // Look for existing chats where the current user is a participant
@@ -65,7 +66,8 @@ class ChatService {
         },
         'jobId': jobId,
         'jobTitle': jobTitle,
-        'lastMessage': 'Chat iniciado', // Initial system message
+        'workerId': workerId,
+        'lastMessage': 'Chat started', // Initial system message
         'lastSenderId': currentUserId,
         'updatedAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
@@ -136,7 +138,7 @@ class ChatService {
         'completionConfirmations.$userId': true,
         'deletedBy': FieldValue.delete(),
         'hiddenFor': FieldValue.delete(),
-        'lastMessage': 'Trabajo marcado como realizado',
+        'lastMessage': 'Work marked as completed',
         'lastSenderId': userId,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -164,24 +166,29 @@ class ChatService {
         if (!chatSnap.exists) {
           throw Exception('Chat not found');
         }
-        print('DEBUG: chat read OK, userId=$userId, chatId=$chatId');
 
         final chatData = chatSnap.data() as Map<String, dynamic>;
         final participantIds =
             List<String>.from(chatData['participantIds'] ?? const []);
         final confirmations =
             Map<String, dynamic>.from(chatData['completionConfirmations'] ?? {});
+        final workerIdInChat = chatData['workerId'] as String?;
+        final isWorker = workerIdInChat != null && userId == workerIdInChat;
 
         confirmations[userId] = true;
 
         final updates = <String, dynamic>{
           'completionRequested': true,
           'completionConfirmations.$userId': true,
-          'completionRatings.$userId': rating,
           'deletedBy': FieldValue.delete(),
           'hiddenFor': FieldValue.delete(),
           'updatedAt': FieldValue.serverTimestamp(),
         };
+
+        // Only save the rating when the poster (payer) confirms — that's the worker's rating
+        if (!isWorker) {
+          updates['workerRating'] = rating;
+        }
 
         final allConfirmed = participantIds.isNotEmpty &&
             participantIds.every((id) => confirmations[id] == true);
@@ -189,7 +196,7 @@ class ChatService {
         if (allConfirmed) {
           updates['completionFinalizedAt'] = FieldValue.serverTimestamp();
           updates['jobStatus'] = 'completed';
-          updates['lastMessage'] = 'Trabajo completado por ambas partes';
+          updates['lastMessage'] = 'Job completed by both parties';
           updates['lastSenderId'] = userId;
 
           final jobId = chatData['jobId'] as String?;

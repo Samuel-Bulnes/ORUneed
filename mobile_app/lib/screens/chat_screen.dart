@@ -207,6 +207,11 @@ class _ChatScreenState extends State<ChatScreen> {
         final hasJobContext =
             effectiveJobId != null && effectiveJobId.trim().isNotEmpty;
 
+        // workerId is null for legacy chats → fall back to allowing both (old behaviour)
+        final workerIdInChat = chatData['workerId'] as String?;
+        final isWorker =
+            workerIdInChat == null || _currentUserId == workerIdInChat;
+
         final requestedByName = requestedById == _currentUserId
             ? 'You'
             : widget.otherUserName;
@@ -242,16 +247,19 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
             actions: [
-              if (hasJobContext)
+              // Only the worker can initiate completion; poster sees 'Completed' once done
+              if (hasJobContext && (isWorker || bothConfirmed))
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: TextButton(
                     onPressed: (bothConfirmed ||
                             currentConfirmed ||
-                            _isSubmittingCompletion)
+                            _isSubmittingCompletion ||
+                            !isWorker)
                         ? null
                         : () => _showCompletionDialog(
                               completionRequested: completionRequested,
+                              isWorker: isWorker,
                             ),
                     child: Text(
                       bothConfirmed
@@ -361,7 +369,7 @@ class _ChatScreenState extends State<ChatScreen> {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Trabajo completado por ambas partes.',
+                'Job completed by both parties.',
                 style: TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w600,
@@ -382,7 +390,7 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Trabajo realizado reportado por $requestedByName.',
+              'Work completion reported by $requestedByName.',
               style: const TextStyle(
                 color: Colors.orange,
                 fontWeight: FontWeight.w600,
@@ -390,13 +398,13 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Encuesta temporal: ¿Cómo estuvo el trabajo?',
+              'Rate the work to confirm:',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Calificación:'),
+                const Text('Rating:'),
                 const SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _selectedSurveyRating,
@@ -425,7 +433,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     backgroundColor: const Color(0xFF1E1B4B),
                   ),
                   child: const Text(
-                    'Confirmar',
+                    'Confirm',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -446,7 +454,7 @@ class _ChatScreenState extends State<ChatScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Ya confirmaste. Esperando confirmación de la otra persona.',
+              'You already confirmed. Waiting for the other person to confirm.',
               style: TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.w600,
@@ -459,8 +467,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   //**********************************************************************************
-  // Completion confirmation dialog with temporary rating
-  Future<void> _showCompletionDialog({required bool completionRequested}) async {
+  // Completion confirmation dialog — workers just confirm, only the poster rates
+  Future<void> _showCompletionDialog({
+    required bool completionRequested,
+    required bool isWorker,
+  }) async {
     int tempRating = _selectedSurveyRating;
 
     await showDialog<void>(
@@ -469,46 +480,49 @@ class _ChatScreenState extends State<ChatScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Confirmar trabajo realizado'),
+              title: const Text('Confirm completed work'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    completionRequested
-                        ? 'Tu confirmación cuenta para cerrar el trabajo.'
-                        : 'Se notificará a la otra persona para que también confirme.',
+                    isWorker
+                        ? 'The payer will be notified to confirm and rate the work.'
+                        : 'Your confirmation will finalize the job.',
                   ),
-                  const SizedBox(height: 12),
-                  const Text('Encuesta temporal: ¿Cómo estuvo el trabajo?'),
-                  const SizedBox(height: 8),
-                  DropdownButton<int>(
-                    value: tempRating,
-                    items: [1, 2, 3, 4, 5]
-                        .map(
-                          (value) => DropdownMenuItem<int>(
-                            value: value,
-                            child: Text('$value/5'),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setDialogState(() => tempRating = value);
-                    },
-                  ),
+                  // Rating picker only shown to the poster (payer)
+                  if (!isWorker) ...[
+                    const SizedBox(height: 12),
+                    const Text('Rate the work:'),
+                    const SizedBox(height: 8),
+                    DropdownButton<int>(
+                      value: tempRating,
+                      items: [1, 2, 3, 4, 5]
+                          .map(
+                            (value) => DropdownMenuItem<int>(
+                              value: value,
+                              child: Text('$value/5'),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => tempRating = value);
+                      },
+                    ),
+                  ],
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancelar'),
+                  child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                     _submitCompletion(
-                      rating: tempRating,
+                      rating: isWorker ? 0 : tempRating,
                       completionRequested: completionRequested,
                     );
                   },
@@ -516,7 +530,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     backgroundColor: const Color(0xFF1E1B4B),
                   ),
                   child: const Text(
-                    'Confirmar',
+                    'Confirm',
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -555,7 +569,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Confirmación guardada.'),
+            content: Text('Confirmation saved.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -564,7 +578,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al confirmar: $e'),
+            content: Text('Error while confirming: $e'),
             backgroundColor: Colors.red,
           ),
         );

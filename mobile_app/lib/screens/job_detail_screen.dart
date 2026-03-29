@@ -405,6 +405,7 @@ class JobDetailScreen extends StatelessWidget {
         otherUserName: job.userName,
         jobId: job.id,
         jobTitle: job.title,
+        workerId: currentUserId, // The person who accepts = the worker
       );
 
       // Close loading dialog
