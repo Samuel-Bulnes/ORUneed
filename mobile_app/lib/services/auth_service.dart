@@ -12,6 +12,10 @@ import '../models/user_model.dart';
 //***********************************************************************************
 // Authentication service that manages all user authentication operations
 class AuthService {
+  // TESTING MODE: Set to false to skip email verification (for quick testing)
+  // Change to true when ready for production
+  static const bool enableEmailVerification = false;
+
   // Firebase Authentication instance for handling auth operations
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
@@ -53,14 +57,26 @@ class AuthService {
       // Temporarily store user's name in Firebase Auth displayName
       await user.updateDisplayName(name);
 
-      // Send verification email
-      await user.sendEmailVerification();
-      print('Verification email sent to: $email');
+      if (enableEmailVerification) {
+        // Send verification email
+        await user.sendEmailVerification();
+        print('Verification email sent to: $email');
 
-      // Immediately sign out the user so they MUST verify before logging in
-      await _auth.signOut();
-
-      print('User created (awaiting verification): $email');
+        // Immediately sign out the user so they MUST verify before logging in
+        await _auth.signOut();
+        print('User created (awaiting verification): $email');
+      } else {
+        // Testing mode: create user profile immediately without email verification
+        print('User created (testing mode - no verification): $email');
+        // Create Firestore profile on signup (instead of on first login)
+        UserModel userData = UserModel(
+          uid: user.uid,
+          email: email,
+          name: name,
+          createdAt: DateTime.now(),
+        );
+        await _firestore.collection('users').doc(user.uid).set(userData.toMap());
+      }
 
     } catch (e) {
       print('Error in signUp: $e');
@@ -89,8 +105,8 @@ class AuthService {
       await user.reload();
       user = _auth.currentUser;
 
-      // Block sign-in if email is not verified
-      if (user != null && !user.emailVerified) {
+      // Block sign-in if email is not verified (only in production mode)
+      if (enableEmailVerification && user != null && !user.emailVerified) {
         await _auth.signOut();
         throw Exception(
           'Please verify your email before logging in. Check your inbox.',

@@ -388,4 +388,58 @@ class ChatService {
       rethrow;
     }
   }
+
+  //*********************************************************************************
+  // GET WORKER RATINGS - Retrieves all completed jobs where user was the worker
+  // Returns a list of chats with workerRating for the profile reviews section
+  Future<List<Map<String, dynamic>>> getWorkerRatings(String userId) async {
+    try {
+      final completedChats = await _firestore
+          .collection('chats')
+          .where('workerId', isEqualTo: userId)  // User is the worker
+          .where('jobStatus', isEqualTo: 'completed')  // Job is completed
+          .get();
+
+      final ratings = <Map<String, dynamic>>[];
+
+      for (var doc in completedChats.docs) {
+        final data = doc.data();
+        final rating = data['workerRating'] as int?;
+        final raterName = data['participantNames']?[(data['participantIds'] as List?)?.firstWhere(
+          (id) => id != userId,
+          orElse: () => '',
+        )] ?? 'Unknown User';
+        
+        // Get completion date
+        final completedAt = data['completionFinalizedAt'];
+        DateTime? completionDate;
+        if (completedAt != null && completedAt is Timestamp) {
+          completionDate = completedAt.toDate();
+        }
+
+        // Only add if there's a rating
+        if (rating != null) {
+          ratings.add({
+            'rating': rating,
+            'raterName': raterName,
+            'completedAt': completionDate,
+            'chatId': doc.id,
+          });
+        }
+      }
+
+      // Sort by most recent first
+      ratings.sort((a, b) {
+        final dateA = a['completedAt'] as DateTime?;
+        final dateB = b['completedAt'] as DateTime?;
+        if (dateA == null || dateB == null) return 0;
+        return dateB.compareTo(dateA);
+      });
+
+      return ratings;
+    } catch (e) {
+      print('Error fetching worker ratings: $e');
+      return [];
+    }
+  }
 }

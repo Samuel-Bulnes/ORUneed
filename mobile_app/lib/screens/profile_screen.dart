@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/chat_service.dart';
 import '../models/user_model.dart';
 import '../utils/constants.dart';
 
@@ -22,12 +23,16 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   // Authentication service to handle user session and data retrieval
   final _authService = AuthService();
+  final _chatService = ChatService();
 
   // Stores the currently authenticated user's information
   UserModel? _currentUser;
 
   // Used to control loading state while fetching user data
   bool _isLoading = true;
+
+  // Stores worker ratings/reviews from completed jobs
+  List<Map<String, dynamic>> _ratings = [];
 
   @override
   void initState() {
@@ -41,10 +46,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Fetches user data from Firestore through AuthService
   Future<void> _loadUserData() async {
     final userData = await _authService.getCurrentUserData();
+    final ratings = await _chatService.getWorkerRatings(userData?.uid ?? '');
 
-    // Update UI with retrieved user info
+    // Update UI with retrieved user info and ratings
     setState(() {
       _currentUser = userData;
+      _ratings = ratings;
       _isLoading = false;
     });
   }
@@ -125,24 +132,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 8),
 
-                  // Static 5-star rating (placeholder for future dynamic rating)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                    ],
-                  ),
+                  // Dynamic rating based on worker reviews
+                  _buildAverageRating(),
                   const SizedBox(height: 20),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            //Job History Section
+            //Reviews Section
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.paddingLarge,
@@ -150,10 +148,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title: Completed Jobs
+                  // Title: Worker Reviews
                   const Text(
-                    'Jobs completed', // Spanish label kept intentionally
-                    // Equivalent in English: "Completed Jobs"
+                    'Reviews received',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -162,28 +159,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Placeholder job history items
-                  _buildJobItem('Samuel Bulnes', 'I need to clean my room'),
-                  _buildJobItem('Gabriela Ballesteros', 'I need help to move heavy stuff'),
-                  _buildJobItem('Tyler Smith', 'I need someone to pick up ...'),
-
-                  const SizedBox(height: 32),
-
-                  // Title: Requests Done
-                  const Text(
-                    'Jobs requested', // "Requests Made"
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // More placeholder job items
-                  _buildJobItem('Shostin Rodriguez', 'I need to clean my room'),
-                  _buildJobItem('Shostin Rodriguez', 'I need help to move heavy stuff'),
-                  _buildJobItem('Shostin Rodriguez', 'I need someone to pick up ...'),
+                  // Show reviews or empty state
+                  if (_ratings.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'No reviews yet. Complete jobs to receive reviews!',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    )
+                  else
+                    ..._ratings.map((rating) => _buildReviewItem(rating)).toList(),
                 ],
               ),
             ),
@@ -194,11 +187,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   //*************************************************************************************
-  // Builds a job/request card item displaying:
+  // Builds the average rating display
+  Widget _buildAverageRating() {
+    if (_ratings.isEmpty) {
+      return const Text(
+        'No rating yet',
+        style: TextStyle(color: Colors.grey, fontSize: 14),
+      );
+    }
+
+    // Calculate average rating
+    double avg = _ratings.fold<double>(0, (sum, r) => sum + (r['rating'] as int)) /
+        _ratings.length;
+
+    // Build stars based on average
+    int fullStars = avg.toInt();
+    bool hasHalfStar = (avg - fullStars) >= 0.5;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Full stars
+        ...List.generate(
+          fullStars,
+          (index) => const Icon(Icons.star, color: Colors.amber, size: 20),
+        ),
+        // Half star if needed
+        if (hasHalfStar)
+          const Icon(Icons.star_half, color: Colors.amber, size: 20),
+        // Empty stars
+        ...List.generate(
+          5 - fullStars - (hasHalfStar ? 1 : 0),
+          (index) => const Icon(Icons.star_outline, color: Colors.amber, size: 20),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${avg.toStringAsFixed(1)} (${_ratings.length})',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  //*************************************************************************************
+  // Builds a review card showing rating, reviewer name, and date
+  Widget _buildReviewItem(Map<String, dynamic> review) {
+    final rating = review['rating'] as int;
+    final raterName = review['raterName'] as String;
+    final completedAt = review['completedAt'] as DateTime?;
+
+    // Format date
+    String dateStr = 'Recently';
+    if (completedAt != null) {
+      dateStr = '${completedAt.month}/${completedAt.day}/${completedAt.year}';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          // Avatar using first letter of reviewer's name
+          CircleAvatar(
+            backgroundColor: AppColors.primary,
+            radius: 20,
+            child: Text(
+              raterName[0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Review details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Reviewer name
+                Text(
+                  raterName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                // Date
+                Text(
+                  dateStr,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Rating stars
+          Row(
+            children: List.generate(
+              rating,
+              (index) => const Icon(Icons.star, color: Colors.amber, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //*************************************************************************************
+  // DEPRECATED: Builds a job/request card item displaying:
   // - User avatar
   // - User name
   // - Description of the task
   // - Static 5-star rating
+  // This method is kept for reference but is no longer used
+  @Deprecated('Use _buildReviewItem instead')
   Widget _buildJobItem(String userName, String description) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
