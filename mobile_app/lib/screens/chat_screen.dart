@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 import '../services/chat_service.dart';
 import '../services/socket_service.dart';
+import '../services/firestore_service.dart';
 import '../models/message_model.dart';
 
 //*************************************************************************************
@@ -42,6 +43,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // Services for chat and real-time messaging
   final ChatService _chatService = ChatService();
   final SocketService _socketService = SocketService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   // Controllers for input and scrolling
   final TextEditingController _messageController = TextEditingController();
@@ -66,9 +68,24 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeUser();
+  }
+
+  //**********************************************************************************
+  // Initialize current user information
+  void _initializeUser() async {
     // Get current user information from Firebase Auth
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
     _currentUserName = FirebaseAuth.instance.currentUser?.displayName ?? 'Unknown';
+
+    // Fetch user name from Firestore for accuracy
+    if (_currentUserId != null) {
+      final user = await _firestoreService.getUser(_currentUserId!);
+      if (user != null) {
+        _currentUserName = user.name;
+      }
+    }
+
     _initializeChat();
   }
 

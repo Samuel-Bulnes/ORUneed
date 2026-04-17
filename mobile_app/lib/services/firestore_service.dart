@@ -1,12 +1,13 @@
 /*
  * Samuel Bulnes
  * Senior Project
- * Authentication Service
- * Firestore operations
+ * Firestore Service
+ * Firestore operations for jobs and users
  */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/job_model.dart';
+import '../models/user_model.dart';
 
 //***********************************************************************************
 // Firestore service that handles all job-related database operations
@@ -192,6 +193,26 @@ class FirestoreService {
     } catch (e) {
       print('Error deleting job: $e');
       rethrow;
+    }
+  }
+
+  //***********************************************************************************
+  // Get User by ID
+  // Fetches user document only once (not a stream)
+  Future<UserModel?> getUser(String userId) async {
+    try {
+      // Get user document by ID
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(userId).get();
+
+      // Check if document exists
+      if (!doc.exists) return null;
+
+      // Convert Firestore document to UserModel object
+      return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+    } catch (e) {
+      print('Error getting user: $e');
+      return null;
     }
   }
 }
