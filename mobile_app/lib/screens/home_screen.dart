@@ -10,6 +10,7 @@ import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/job_model.dart';
 import '../models/user_model.dart';
+import '../providers/job_filter_provider.dart';
 import '../utils/constants.dart';
 import '../job_card.dart';
 import 'job_detail_screen.dart';
@@ -40,11 +41,25 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Current logged-in user data
   UserModel? _currentUser;
+  
+  // Job filter state
+  late JobFilterProvider _filterProvider;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _filterProvider = JobFilterProvider();
+    _searchController.addListener(() {
+      _filterProvider.setSearchQuery(_searchController.text);
+    });
     _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   // Loads current user data from authentication service
@@ -118,9 +133,102 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   //*************************************************************************************
-  // Builds the home page with job listings
+  // Builds the home page with job listings and filtering
   // Uses StreamBuilder to listen for real-time updates from Firestore
   Widget _buildHomePage() {
+    return Column(
+      children: [
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.all(AppSizes.paddingLarge),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search jobs...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                borderSide: const BorderSide(color: Colors.grey, width: 1),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                borderSide: const BorderSide(color: Colors.grey, width: 1),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
+        ),
+        
+        // Category filter chips
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+          child: SizedBox(
+            height: 50,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: JobCategories.categories.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final category = JobCategories.categories[index];
+                final isSelected = _filterProvider.selectedCategory == category;
+                
+                return FilterChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        JobCategories.categoryIcons[category],
+                        size: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(category),
+                    ],
+                  ),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      _filterProvider.setCategory(category);
+                    });
+                  },
+                  backgroundColor: Colors.grey[200],
+                  selectedColor: AppColors.primary.withOpacity(0.8),
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 8),
+        
+        // Jobs list
+        Expanded(
+          child: _buildJobsList(),
+        ),
+      ],
+    );
+  }
+
+  //*************************************************************************************
+  // Builds the filtered jobs list
+  Widget _buildJobsList() {
     return StreamBuilder<List<JobModel>>(
       stream: _firestoreService.getOpenJobs(),
       builder: (context, snapshot) {
@@ -148,7 +256,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Empty state - no jobs available yet
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Center(
             child: Column(
@@ -176,11 +283,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Button to navigate to Post screen
                 ElevatedButton.icon(
                   onPressed: () {
                     setState(() {
-                      _selectedIndex = 1; // Navigate to Post tab
+                      _selectedIndex = 1;
                     });
                   },
                   icon: const Icon(Icons.add),
@@ -199,24 +305,70 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Success state - display list of available jobs
-        final jobs = snapshot.data!;
+        // Filter jobs based on category and search query
+        final allJobs = snapshot.data!;
+        final filteredJobs = allJobs.where((job) {
+          return _filterProvider.matchesFilters(
+            jobCategory: job.category,
+            jobTitle: job.title,
+            jobDescription: job.description,
+          );
+        }).toList();
 
+        // Show empty state if no jobs match filters
+        if (filteredJobs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_off,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No jobs found',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_filterProvider.hasActiveFilters)
+                  GestureDetector(
+                    onTap: () {
+                      _filterProvider.resetFilters();
+                      _searchController.clear();
+                      setState(() {});
+                    },
+                    child: Text(
+                      'Clear filters',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // Display filtered jobs list
         return RefreshIndicator(
-          // Pull-to-refresh functionality
           onRefresh: () async {
-            setState(() {}); // Trigger rebuild to refresh stream
+            setState(() {});
             await Future.delayed(const Duration(seconds: 1));
           },
           child: ListView.builder(
-            // Add padding to avoid content being hidden behind bottom nav bar
             padding: const EdgeInsets.only(top: 8, bottom: 80),
-            itemCount: jobs.length,
+            itemCount: filteredJobs.length,
             itemBuilder: (context, index) {
-              final job = jobs[index];
+              final job = filteredJobs[index];
               return JobCard(
                 job: job,
-                // Navigate to job details when card is tapped
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(

@@ -18,6 +18,7 @@ class JobModel {
   final DateTime createdAt;     // When the job was posted
   final String status;          // Current status: 'open', 'in_progress', or 'completed'
   final String? acceptedById;   // Firebase UID of the user who accepted the job
+  final String category;        // Job category for filtering (e.g., 'Cleaning', 'Tutoring', 'Delivery')
 
   JobModel({
     required this.id,
@@ -30,6 +31,7 @@ class JobModel {
     required this.createdAt,
     this.status = 'open',        // New jobs start with 'open' status
     this.acceptedById,           // Null until someone accepts the job
+    this.category = 'Other',     // Default category if not specified
   });
 
   //*********************************************************************************
@@ -46,6 +48,7 @@ class JobModel {
       'createdAt': createdAt.toIso8601String(), // Convert DateTime to string for storage
       'status': status,
       'acceptedById': acceptedById,
+      'category': category,
     };
   }
 
@@ -63,6 +66,7 @@ class JobModel {
       createdAt: DateTime.parse(map['createdAt']),          // Convert string back to DateTime
       status: map['status'] ?? 'open',                      // Default to 'open' if missing
       acceptedById: map['acceptedById'],                    // Nullable, no default needed
+      category: map['category'] ?? 'Other',                 // Default to 'Other' if missing
     );
   }
 
@@ -79,6 +83,7 @@ class JobModel {
     DateTime? createdAt,
     String? status,
     String? acceptedById,
+    String? category,
   }) {
     return JobModel(
       id: id ?? this.id,
@@ -91,6 +96,7 @@ class JobModel {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       acceptedById: acceptedById ?? this.acceptedById,
+      category: category ?? this.category,
     );
   }
 }

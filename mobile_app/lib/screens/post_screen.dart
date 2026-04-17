@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/job_model.dart';
+import '../providers/job_filter_provider.dart';
 import '../utils/constants.dart';
 
 //*************************************************************************************
@@ -40,6 +41,7 @@ class _PostScreenState extends State<PostScreen> {
   // UI state variables
   bool _isLoading = false;
   List<File> _selectedImages = [];
+  String _selectedCategory = 'Other';
 
   @override
   void dispose() {
@@ -195,6 +197,7 @@ class _PostScreenState extends State<PostScreen> {
         price: double.parse(_priceController.text),
         imageUrls: imageUrls,
         createdAt: DateTime.now(),
+        category: _selectedCategory,
       );
 
       // Save job to Firestore
@@ -439,6 +442,47 @@ class _PostScreenState extends State<PostScreen> {
                   ),
                 ),
 
+              const SizedBox(height: 16),
+
+              //***********************************************************************************
+              // Category selection section
+              const Text(
+                'Category',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                ),
+                items: JobCategories.categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedCategory = value;
+                    });
+                  }
+                },
+              ),
               const SizedBox(height: 16),
 
               // Price input section
