@@ -33,6 +33,65 @@ class FirestoreService {
   }
 
   //***********************************************************************************
+  // Get first page of open jobs (pagination)
+  // Loads initial 20 jobs, returns jobs + last document for cursor-based pagination
+  Future<Map<String, dynamic>> getOpenJobsFirstPage({int pageSize = 20}) async {
+    try {
+      final query = await _firestore
+          .collection('jobs')
+          .where('status', isEqualTo: 'open')
+          .orderBy('createdAt', descending: true)
+          .limit(pageSize)
+          .get();
+
+      final jobs = query.docs
+          .map((doc) => JobModel.fromMap(doc.data()))
+          .toList();
+
+      // Return jobs and last document for next page cursor
+      return {
+        'jobs': jobs,
+        'lastDocument': query.docs.isNotEmpty ? query.docs.last : null,
+        'hasMore': jobs.length == pageSize, // true if more jobs exist
+      };
+    } catch (e) {
+      print('Error getting first page: $e');
+      rethrow;
+    }
+  }
+
+  //***********************************************************************************
+  // Get next page of open jobs (pagination)
+  // Loads next 20 jobs using cursor-based pagination (startAfter)
+  Future<Map<String, dynamic>> getOpenJobsNextPage(
+    DocumentSnapshot lastDocument, {
+    int pageSize = 20,
+  }) async {
+    try {
+      final query = await _firestore
+          .collection('jobs')
+          .where('status', isEqualTo: 'open')
+          .orderBy('createdAt', descending: true)
+          .startAfter([lastDocument['createdAt']])  // Start after last document
+          .limit(pageSize)
+          .get();
+
+      final jobs = query.docs
+          .map((doc) => JobModel.fromMap(doc.data()))
+          .toList();
+
+      return {
+        'jobs': jobs,
+        'lastDocument': query.docs.isNotEmpty ? query.docs.last : null,
+        'hasMore': jobs.length == pageSize,
+      };
+    } catch (e) {
+      print('Error getting next page: $e');
+      rethrow;
+    }
+  }
+
+  //***********************************************************************************
   // Get jobs created by a specific user
   // Used for "My Jobs" section (jobs posted by logged-in user)
   Stream<List<JobModel>> getUserJobs(String userId) {
