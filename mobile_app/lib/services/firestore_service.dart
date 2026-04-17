@@ -16,26 +16,19 @@ class FirestoreService {
 
   //***********************************************************************************
   // Get all open jobs
-  // Reads the entire "jobs" collection → filters & sorts in memory.
+  // Optimized: Firestore filters and sorts directly (not in memory)
+  // Returns jobs with status='open', ordered by newest first
   Stream<List<JobModel>> getOpenJobs() {
     return _firestore
         .collection('jobs')
+        .where('status', isEqualTo: 'open')  // Filter at Firestore level
+        .orderBy('createdAt', descending: true)  // Sort at Firestore level
         .snapshots()
         .map((snapshot) {
       // Convert every Firestore document to JobModel
-      final allJobs = snapshot.docs
+      return snapshot.docs
           .map((doc) => JobModel.fromMap(doc.data()))
           .toList();
-
-      // Filter only jobs with status == 'open'
-      final openJobs = allJobs
-          .where((job) => job.status == 'open')
-          .toList();
-
-      // Sort newest → oldest based on createdAt timestamp
-      openJobs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-      return openJobs;
     });
   }
 
