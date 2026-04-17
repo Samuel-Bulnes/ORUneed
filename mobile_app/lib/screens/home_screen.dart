@@ -6,10 +6,10 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../models/job_model.dart';
-import '../models/user_model.dart';
 import '../providers/job_filter_provider.dart';
 import '../utils/constants.dart';
 import '../job_card.dart';
@@ -38,9 +38,6 @@ class _HomeScreenState extends State<HomeScreen> {
   
   // Current selected index for bottom navigation bar
   int _selectedIndex = 0;
-  
-  // Current logged-in user data
-  UserModel? _currentUser;
   
   // Job filter state
   late JobFilterProvider _filterProvider;
@@ -130,9 +127,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Loads current user data from authentication service
   Future<void> _loadUserData() async {
     final userData = await _authService.getCurrentUserData();
-    setState(() {
-      _currentUser = userData;
-    });
+    // User data loaded but not stored (UI doesn't need it currently)
+    if (userData == null) {
+      print('No user data found');
+    }
   }
 
   // Handles bottom navigation bar item tap events

@@ -118,9 +118,7 @@ class SocketService {
       _reconnectAttempts = 0;  // Reset counter on successful connection
       
       // Register user
-      _socket!.emit('register', userId, (response) {
-        _log('INFO', 'Registration response received', response);
-      });
+      _socket!.emit('register', userId);
       
       _connectionStatusController.add(true);
     });
@@ -246,10 +244,8 @@ class SocketService {
     };
 
     try {
-      // Emit with callback (acknowledgment)
-      _socket!.emit('send_message', data, (response) {
-        _log('INFO', 'Message acknowledgment', response);
-      });
+      // Emit message event
+      _socket!.emit('send_message', data);
 
       _log('INFO', 'Message sent', {'to': receiverId});
       return true;
