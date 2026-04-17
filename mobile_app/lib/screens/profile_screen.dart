@@ -67,8 +67,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Safety check in case user data fails to load
     if (_currentUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('Error loading user data')),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(AppStrings.appName),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          actions: [
+            // Logout button (clears session and redirects to login)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await _authService.signOut();
+
+                // Prevents navigation issues if widget is unmounted
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+              },
+            ),
+          ],
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 60, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Error loading user data',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Your account data may have been reset.\nPlease log out and sign in again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
