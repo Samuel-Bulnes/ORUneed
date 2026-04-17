@@ -5,6 +5,8 @@
  * Defines the structure of a job posting stored in Firestore
  */
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 //***********************************************************************************
 // Contains all the information needed to display and manage a job
 class JobModel {
@@ -55,6 +57,16 @@ class JobModel {
   //*********************************************************************************
   // Factory constructor that creates a JobModel from a Firestore Map
   factory JobModel.fromMap(Map<String, dynamic> map) {
+    // Handle createdAt - can be Timestamp or legacy string
+    DateTime createdAtDate;
+    if (map['createdAt'] is Timestamp) {
+      createdAtDate = (map['createdAt'] as Timestamp).toDate();
+    } else if (map['createdAt'] is String) {
+      createdAtDate = DateTime.parse(map['createdAt']); // Legacy string support
+    } else {
+      createdAtDate = DateTime.now();
+    }
+
     return JobModel(
       id: map['id'] ?? '',
       userId: map['userId'] ?? '',
@@ -63,7 +75,7 @@ class JobModel {
       description: map['description'] ?? '',
       price: (map['price'] ?? 0.0).toDouble(),              // Ensure value is a double
       imageUrls: List<String>.from(map['imageUrls'] ?? []), // Convert dynamic list to string list
-      createdAt: DateTime.parse(map['createdAt']),          // Convert string back to DateTime
+      createdAt: createdAtDate,                              // Convert Timestamp or string to DateTime
       status: map['status'] ?? 'open',                      // Default to 'open' if missing
       acceptedById: map['acceptedById'],                    // Nullable, no default needed
       category: map['category'] ?? 'Other',                 // Default to 'Other' if missing

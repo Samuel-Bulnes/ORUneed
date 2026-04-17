@@ -16,18 +16,18 @@ class FirestoreService {
 
   //***********************************************************************************
   // Get all open jobs
-  // Optimized: Firestore filters and sorts directly (not in memory)
   // Returns jobs with status='open', ordered by newest first
+  // Handles both new jobs (with status field) and legacy jobs (without status)
   Stream<List<JobModel>> getOpenJobs() {
     return _firestore
         .collection('jobs')
-        .where('status', isEqualTo: 'open')  // Filter at Firestore level
         .orderBy('createdAt', descending: true)  // Sort at Firestore level
         .snapshots()
         .map((snapshot) {
-      // Convert every Firestore document to JobModel
+      // Convert every Firestore document to JobModel and filter in memory
       return snapshot.docs
           .map((doc) => JobModel.fromMap(doc.data()))
+          .where((job) => job.status == 'open')  // Filter in memory (handles missing status field)
           .toList();
     });
   }
@@ -39,20 +39,20 @@ class FirestoreService {
     try {
       final query = await _firestore
           .collection('jobs')
-          .where('status', isEqualTo: 'open')
           .orderBy('createdAt', descending: true)
           .limit(pageSize)
           .get();
 
       final jobs = query.docs
           .map((doc) => JobModel.fromMap(doc.data()))
+          .where((job) => job.status == 'open')  // Filter in memory (handles missing status field)
           .toList();
 
       // Return jobs and last document for next page cursor
       return {
         'jobs': jobs,
         'lastDocument': query.docs.isNotEmpty ? query.docs.last : null,
-        'hasMore': jobs.length == pageSize, // true if more jobs exist
+        'hasMore': query.docs.length == pageSize,
       };
     } catch (e) {
       print('Error getting first page: $e');
@@ -62,7 +62,7 @@ class FirestoreService {
 
   //***********************************************************************************
   // Get next page of open jobs (pagination)
-  // Loads next 20 jobs using cursor-based pagination (startAfter)
+  // Loads next 20 jobs using cursor-based pagination (startAfterDocument)
   Future<Map<String, dynamic>> getOpenJobsNextPage(
     DocumentSnapshot lastDocument, {
     int pageSize = 20,
@@ -70,20 +70,20 @@ class FirestoreService {
     try {
       final query = await _firestore
           .collection('jobs')
-          .where('status', isEqualTo: 'open')
           .orderBy('createdAt', descending: true)
-          .startAfter([lastDocument['createdAt']])  // Start after last document
+          .startAfterDocument(lastDocument)
           .limit(pageSize)
           .get();
 
       final jobs = query.docs
           .map((doc) => JobModel.fromMap(doc.data()))
+          .where((job) => job.status == 'open')  // Filter in memory (handles missing status field)
           .toList();
 
       return {
         'jobs': jobs,
         'lastDocument': query.docs.isNotEmpty ? query.docs.last : null,
-        'hasMore': jobs.length == pageSize,
+        'hasMore': query.docs.length == pageSize,
       };
     } catch (e) {
       print('Error getting next page: $e');
