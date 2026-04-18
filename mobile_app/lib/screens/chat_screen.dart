@@ -102,14 +102,13 @@ class _ChatScreenState extends State<ChatScreen> {
     // Listen for incoming messages in real-time
     _messageSubscription = _socketService.onMessageReceived.listen((data) {
       print('📩 Message received in UI: $data');
-      _scrollToBottom();
+      // Don't scroll automatically - let StreamBuilder handle it
     });
 
     // Listen for typing indicator from other user
     _typingSubscription = _socketService.onUserTyping.listen((userId) {
       if (userId == widget.otherUserId) {
         setState(() => _isTyping = true);
-        _scrollToBottom();
       }
     });
 
@@ -127,15 +126,13 @@ class _ChatScreenState extends State<ChatScreen> {
   //**********************************************************************************
   // Smoothly scrolls to the bottom of the message list
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   //**********************************************************************************
@@ -164,8 +161,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Stop typing indicator
     _socketService.emitStopTyping(_currentUserId!, widget.otherUserId);
-
-    _scrollToBottom();
   }
 
   //**********************************************************************************
@@ -331,23 +326,26 @@ class _ChatScreenState extends State<ChatScreen> {
                       );
                     }
 
-                    // Auto-scroll to bottom when new messages arrive
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _scrollToBottom();
-                    });
-
                     return ListView.builder(
+                      reverse: true,
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
                       // Add extra item for typing indicator if active
                       itemCount: messages.length + (_isTyping ? 1 : 0),
                       itemBuilder: (context, index) {
-                        // Show typing indicator at the end if other user is typing
-                        if (index == messages.length && _isTyping) {
+                        // Show typing indicator at the beginning (since list is reversed)
+                        if (index == 0 && _isTyping) {
                           return _buildTypingIndicator();
                         }
 
-                        final message = messages[index];
+                        // Adjust index for typing indicator offset
+                        final messageIndex = _isTyping ? index - 1 : index;
+                        
+                        // For reversed list, we need to reverse the message order
+                        final actualIndex = messages.length - 1 - messageIndex;
+                        if (actualIndex < 0 || actualIndex >= messages.length) return SizedBox.shrink();
+                        
+                        final message = messages[actualIndex];
                         // Check if message is from current user
                         final isMe = message.senderId == _currentUserId;
 
