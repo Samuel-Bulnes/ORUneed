@@ -42,14 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // Job filter state
   late JobFilterProvider _filterProvider;
   final TextEditingController _searchController = TextEditingController();
-  
-  // Pagination state
-  List<JobModel> _paginatedJobs = [];
-  DocumentSnapshot? _lastDocument;
-  bool _isLoadingMore = false;
-  bool _hasMoreJobs = true;
   late ScrollController _scrollController;
-  bool _isInitialLoadDone = false;
+  
+  // Stream for real-time job updates
+  Stream<List<JobModel>>? _jobsStream;
 
   @override
   void initState() {
@@ -59,9 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _filterProvider.setSearchQuery(_searchController.text);
     });
     _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
     _loadUserData();
-    _loadFirstPage();
+    
+    // Initialize stream for real-time job updates
+    _jobsStream = _firestoreService.getOpenJobs();
   }
 
   @override
@@ -72,58 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   //***********************************************************************************
-  // Load first page of jobs
-  Future<void> _loadFirstPage() async {
-    try {
-      final result = await _firestoreService.getOpenJobsFirstPage();
-      setState(() {
-        _paginatedJobs = List<JobModel>.from(result['jobs']);
-        _lastDocument = result['lastDocument'];
-        _hasMoreJobs = result['hasMore'];
-        _isInitialLoadDone = true;
-      });
-    } catch (e) {
-      print('Error loading first page: $e');
-      setState(() {
-        _isInitialLoadDone = true;
-      });
-    }
-  }
-
-  //***********************************************************************************
-  // Load more jobs when user scrolls to bottom
-  Future<void> _loadMoreJobs() async {
-    if (_isLoadingMore || !_hasMoreJobs || _lastDocument == null) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final result = await _firestoreService.getOpenJobsNextPage(_lastDocument!);
-      setState(() {
-        _paginatedJobs.addAll(List<JobModel>.from(result['jobs']));
-        _lastDocument = result['lastDocument'];
-        _hasMoreJobs = result['hasMore'];
-        _isLoadingMore = false;
-      });
-    } catch (e) {
-      print('Error loading more jobs: $e');
-      setState(() {
-        _isLoadingMore = false;
-      });
-    }
-  }
-
-  //***********************************************************************************
-  // Detect scroll position and load more when near bottom
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      _loadMoreJobs();
-    }
-  }
-
   // Loads current user data from authentication service
   Future<void> _loadUserData() async {
     final userData = await _authService.getCurrentUserData();
@@ -146,7 +91,14 @@ class _HomeScreenState extends State<HomeScreen> {
     // Bottom navigation pages list
     final List<Widget> pages = [
       _buildHomePage(),      // Search/Jobs feed
-      const PostScreen(),    // Create new job post
+      PostScreen(
+        onJobPosted: () {
+          // Navigate to home page (index 0) when a job is successfully posted
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),    // Create new job post
       const ProfileScreen(), // User profile
       const HistoryScreen(), // Job history
       const ChatListScreen(), // Messages
@@ -290,150 +242,143 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   //*************************************************************************************
-  // Builds the filtered jobs list with pagination
-  // Shows loading spinner initially, then loads jobs with infinite scroll
+  // Builds the filtered jobs list with real-time updates
+  // Uses StreamBuilder to listen for real-time changes from Firestore
   Widget _buildJobsList() {
-    // Show loading spinner on initial load
-    if (!_isInitialLoadDone) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    return StreamBuilder<List<JobModel>>(
+      stream: _jobsStream,
+      builder: (context, snapshot) {
+        // Handle loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    // Filter jobs based on category and search query
-    final filteredJobs = _paginatedJobs.where((job) {
-      return _filterProvider.matchesFilters(
-        jobCategory: job.category,
-        jobTitle: job.title,
-        jobDescription: job.description,
-      );
-    }).toList();
+        // Handle error state
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        }
 
-    // Show empty state if no jobs found
-    if (filteredJobs.isEmpty && _paginatedJobs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.work_outline,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No jobs available yet',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Be the first to post!',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _selectedIndex = 1;
-                });
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Create Post'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
+        // Get jobs from stream
+        final jobs = snapshot.data ?? [];
+
+        // Filter jobs based on category and search query
+        final filteredJobs = jobs.where((job) {
+          return _filterProvider.matchesFilters(
+            jobCategory: job.category,
+            jobTitle: job.title,
+            jobDescription: job.description,
+          );
+        }).toList();
+
+        // Show empty state if no jobs found
+        if (filteredJobs.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.work_outline,
+                  size: 80,
+                  color: Colors.grey[400],
                 ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Show no results state if filters don't match
-    if (filteredJobs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_off,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No jobs found',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (_filterProvider.hasActiveFilters)
-              GestureDetector(
-                onTap: () {
-                  _filterProvider.resetFilters();
-                  _searchController.clear();
-                  setState(() {});
-                },
-                child: Text(
-                  'Clear filters',
+                const SizedBox(height: 16),
+                Text(
+                  'No jobs available',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.primary,
-                    decoration: TextDecoration.underline,
+                    fontSize: 18,
+                    color: Colors.grey[600],
                   ),
                 ),
-              ),
-          ],
-        ),
-      );
-    }
+                const SizedBox(height: 8),
+                if (jobs.isEmpty)
+                  Text(
+                    'Be the first to post!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  )
+                else
+                  Text(
+                    'No jobs found with these filters',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                if (jobs.isNotEmpty && filteredJobs.isEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _filterProvider.resetFilters();
+                      _searchController.clear();
+                      setState(() {});
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text(
+                        'Clear filters',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (jobs.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _selectedIndex = 1;
+                        });
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Post'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
 
-    // Display filtered jobs with infinite scroll
-    return RefreshIndicator(
-      onRefresh: () async {
-        _scrollController.jumpTo(0);
-        await _loadFirstPage();
-      },
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.only(top: 8, bottom: 80),
-        itemCount: filteredJobs.length + (_isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          // Show loading indicator at bottom when loading more
-          if (index == filteredJobs.length) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                ),
-              ),
-            );
-          }
-
-          final job = filteredJobs[index];
-          return JobCard(
-            job: job,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => JobDetailScreen(job: job),
-                ),
+        // Display filtered jobs with real-time updates
+        return RefreshIndicator(
+          onRefresh: () async {
+            _scrollController.jumpTo(0);
+            // Stream will auto-refresh from Firestore
+          },
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(top: 8, bottom: 80),
+            itemCount: filteredJobs.length,
+            itemBuilder: (context, index) {
+              final job = filteredJobs[index];
+              return JobCard(
+                job: job,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => JobDetailScreen(job: job),
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

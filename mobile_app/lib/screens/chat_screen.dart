@@ -583,14 +583,7 @@ class _ChatScreenState extends State<ChatScreen> {
         rating: rating,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Confirmation saved.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

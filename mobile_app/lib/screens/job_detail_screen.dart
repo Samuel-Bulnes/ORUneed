@@ -206,13 +206,7 @@ class JobDetailScreen extends StatelessWidget {
 
                                 if (!context.mounted) return;
 
-                                // Show success and immediately start/open chat.
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('✅ Job accepted! Opening chat...'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
+                                // Open chat immediately after accepting job
 
                                 await _createChat(
                                   context,

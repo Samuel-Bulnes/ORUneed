@@ -18,7 +18,9 @@ import '../utils/constants.dart';
 // Job posting screen where users can create new job listings
 // Allows users to add title, description, images, and price for services
 class PostScreen extends StatefulWidget {
-  const PostScreen({super.key});
+  final VoidCallback? onJobPosted;
+  
+  const PostScreen({super.key, this.onJobPosted});
 
   @override
   State<PostScreen> createState() => _PostScreenState();
@@ -213,13 +215,11 @@ class _PostScreenState extends State<PostScreen> {
         _selectedImages.clear();
       });
 
-      // Show success notification
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Job posted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      // Call callback to navigate back to home page and show the newly posted job
+      if (widget.onJobPosted != null) {
+        widget.onJobPosted!();
+      }
+
 
     } catch (e) {
       if (!mounted) return;
