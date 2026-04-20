@@ -180,6 +180,27 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  //**********************************************************************************
+  // Detect when the chat changes (e.g., opening a different job with existing chat)
+  // Reset completion status and survey rating
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    if (oldWidget.chatId != widget.chatId) {
+      print('⚠️ Chat ID changed from ${oldWidget.chatId} to ${widget.chatId}');
+      // Reset completion-related state for the new chat
+      setState(() {
+        _selectedSurveyRating = 5;
+        _isSubmittingCompletion = false;
+      });
+      
+      // Re-initialize chat for the new chat ID
+      _messageController.clear();
+      _initializeChat();
+    }
+  }
+
   @override
   void dispose() {
     // Clean up resources

@@ -159,6 +159,7 @@ class ChatService {
     final chatRef = _firestore.collection('chats').doc(chatId);
     String? finalizedJobId;
     bool finalizedInChat = false;
+    String? workerIdForRating;
 
     try {
       await _firestore.runTransaction((transaction) async {
@@ -175,6 +176,9 @@ class ChatService {
         final workerIdInChat = chatData['workerId'] as String?;
         final isWorker = workerIdInChat != null && userId == workerIdInChat;
 
+        // Capture jobId for later use
+        final jobIdInChat = chatData['jobId'] as String?;
+
         confirmations[userId] = true;
 
         final updates = <String, dynamic>{
@@ -185,11 +189,6 @@ class ChatService {
           'updatedAt': FieldValue.serverTimestamp(),
         };
 
-        // Only save the rating when the poster (payer) confirms — that's the worker's rating
-        if (!isWorker) {
-          updates['workerRating'] = rating;
-        }
-
         final allConfirmed = participantIds.isNotEmpty &&
             participantIds.every((id) => confirmations[id] == true);
 
@@ -199,15 +198,36 @@ class ChatService {
           updates['lastMessage'] = 'Job completed by both parties';
           updates['lastSenderId'] = userId;
 
-          final jobId = chatData['jobId'] as String?;
-          if (jobId != null && jobId.isNotEmpty) {
-            finalizedJobId = jobId;
+          if (jobIdInChat != null && jobIdInChat.isNotEmpty) {
+            finalizedJobId = jobIdInChat;
           }
           finalizedInChat = true;
+
+          // Only store worker ID for rating if BOTH have confirmed and poster is doing the rating
+          if (!isWorker) {
+            workerIdForRating = workerIdInChat;
+          }
         }
 
         transaction.update(chatRef, updates);
       });
+
+      // Save rating to subcollection ONLY after both have confirmed
+      if (workerIdForRating != null && workerIdForRating!.isNotEmpty && finalizedInChat) {
+        await _firestore
+            .collection('chats')
+            .doc(chatId)
+            .collection('ratings')
+            .add({
+          'chatId': chatId,
+          'workerId': workerIdForRating,
+          'posterId': userId,
+          'rating': rating,
+          'jobId': finalizedJobId ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        print('✅ Rating saved to subcollection for worker=$workerIdForRating');
+      }
 
       // Keep confirmation success even if the user cannot update /jobs directly.
       if (finalizedInChat && finalizedJobId != null) {
@@ -390,58 +410,105 @@ class ChatService {
   }
 
   //*********************************************************************************
-  // GET WORKER RATINGS - Retrieves all completed jobs where user was the worker
-  // Returns a list of chats with workerRating for the profile reviews section
-  // Optimized: Limited to last 50 results for faster queries
+  // GET WORKER RATINGS - Retrieves all ratings for a worker from subcollections AND legacy ratings
+  // Returns a list of ratings for the profile reviews section
+  // Supports both new (subcollection) and old (workerRating field) ratings
   Future<List<Map<String, dynamic>>> getWorkerRatings(String userId) async {
     try {
       print('🔍 getWorkerRatings: Fetching ratings for userId=$userId');
       
+      final ratings = <Map<String, dynamic>>[];
+
+      // Get all completed chats where user is the worker
       final completedChats = await _firestore
           .collection('chats')
-          .where('workerId', isEqualTo: userId)  // User is the worker
-          .where('jobStatus', isEqualTo: 'completed')  // Job is completed
-          .orderBy('completionFinalizedAt', descending: true)  // Newest first
-          .limit(50)  // Only fetch last 50 completed jobs
+          .where('workerId', isEqualTo: userId)
+          .where('jobStatus', isEqualTo: 'completed')
           .get();
 
       print('✅ getWorkerRatings: Found ${completedChats.docs.length} completed chats');
 
-      final ratings = <Map<String, dynamic>>[];
-
-      for (var doc in completedChats.docs) {
-        final data = doc.data();
-        final rating = data['workerRating'] as int?;
-        print('   - Chat ${doc.id}: workerId=${data['workerId']}, jobStatus=${data['jobStatus']}, workerRating=$rating');
+      // For each completed chat, get ratings from both sources
+      for (var chatDoc in completedChats.docs) {
+        final chatData = chatDoc.data();
+        final chatId = chatDoc.id;
+        final participantNames = chatData['participantNames'] as Map<String, dynamic>?;
         
-        if (rating == null) {
-          print('     ⚠️  Skipping: no rating');
-          continue;
+        // ===== LEGACY SUPPORT: Check for old workerRating field =====
+        final legacyRating = chatData['workerRating'] as int?;
+        if (legacyRating != null) {
+          print('   - Chat $chatId: Found LEGACY rating=$legacyRating');
+          
+          // Find the poster name (not the worker)
+          final participantIds = (chatData['participantIds'] as List?)?.cast<String>() ?? [];
+          final posterId = participantIds.firstWhere(
+            (id) => id != userId,
+            orElse: () => '',
+          );
+          final raterName = (posterId.isNotEmpty && participantNames != null) 
+              ? (participantNames[posterId] as String?) ?? 'Unknown User'
+              : 'Unknown User';
+          
+          final completedAt = chatData['completionFinalizedAt'];
+          DateTime? ratingDate;
+          if (completedAt != null && completedAt is Timestamp) {
+            ratingDate = completedAt.toDate();
+          }
+
+          ratings.add({
+            'rating': legacyRating,
+            'raterName': raterName,
+            'completedAt': ratingDate,
+            'chatId': chatId,
+          });
+          print('     ✨ Added LEGACY: rating=$legacyRating, rater=$raterName');
         }
         
-        final raterName = data['participantNames']?[(data['participantIds'] as List?)?.firstWhere(
-          (id) => id != userId,
-          orElse: () => '',
-        )] ?? 'Unknown User';
-        
-        // Get completion date
-        final completedAt = data['completionFinalizedAt'];
-        DateTime? completionDate;
-        if (completedAt != null && completedAt is Timestamp) {
-          completionDate = completedAt.toDate();
-        }
+        // ===== NEW: Get ratings from subcollection =====
+        try {
+          final ratingsSnapshot = await _firestore
+              .collection('chats')
+              .doc(chatId)
+              .collection('ratings')
+              .get();
 
-        // Add rating
-        ratings.add({
-          'rating': rating,
-          'raterName': raterName,
-          'completedAt': completionDate,
-          'chatId': doc.id,
-        });
-        print('     ✨ Added: rating=$rating, rater=$raterName');
+          for (var ratingDoc in ratingsSnapshot.docs) {
+            final ratingData = ratingDoc.data();
+            final rating = ratingData['rating'] as int?;
+            final posterId = ratingData['posterId'] as String?;
+            
+            print('   - Chat $chatId: Found NEW rating=$rating, posterId=$posterId');
+            
+            if (rating == null) {
+              print('     ⚠️  Skipping: no rating value');
+              continue;
+            }
+
+            // Get poster name from participantNames
+            final raterName = (participantNames?[posterId] as String?) ?? 'Unknown User';
+            
+            // Get creation date
+            final createdAt = ratingData['createdAt'];
+            DateTime? ratingDate;
+            if (createdAt != null && createdAt is Timestamp) {
+              ratingDate = createdAt.toDate();
+            }
+
+            ratings.add({
+              'rating': rating,
+              'raterName': raterName,
+              'completedAt': ratingDate,
+              'chatId': chatId,
+            });
+            print('     ✨ Added NEW: rating=$rating, rater=$raterName');
+          }
+        } catch (e) {
+          print('     ⚠️  Subcollection error for $chatId: $e');
+          // Continue with next chat even if subcollection read fails
+        }
       }
 
-      print('📊 getWorkerRatings: Returning ${ratings.length} ratings');
+      print('📊 getWorkerRatings: Returning ${ratings.length} total ratings');
       return ratings;
     } catch (e) {
       print('❌ Error fetching worker ratings: $e');
