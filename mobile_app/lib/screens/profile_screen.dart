@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         appBar: AppBar(
           title: const Text(AppStrings.appName),
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.neonBlue,
           centerTitle: true,
           actions: [
             // Logout button (clears session and redirects to login)
@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 'Your account data may have been reset.\nPlease log out and sign in again.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -122,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.neonBlue,
         centerTitle: true,
         actions: [
           // Logout button (clears session and redirects to login)

@@ -40,7 +40,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         appBar: AppBar(
           title: const Text('History'),
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.neonBlue,
           centerTitle: true,
         ),
         body: const Center(
@@ -53,7 +53,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         title: const Text('History'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.neonBlue,
         centerTitle: true,
       ),
       body: StreamBuilder<List<JobModel>>(
@@ -72,11 +72,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: [
                   const Icon(Icons.error_outline, size: 60, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Error: ${snapshot.error}'),
+                  Text('Error: ${snapshot.error}', style: const TextStyle(color: AppColors.textPrimary)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() {}),
-                    child: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.neonBlue,
+                    ),
+                    child: const Text('Retry', style: TextStyle(color: Colors.black)),
                   ),
                 ],
               ),
@@ -89,25 +92,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.history,
                     size: 80,
-                    color: Colors.grey[400],
+                    color: Color(0xFF666666),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'No history yet',
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey[600],
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  const Text(
                     'Jobs you accept or post will appear here',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Color(0xFF888888),
                     ),
                   ),
                 ],

@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.neonBlue,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -145,16 +145,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     validator: Validators.validateOruEmail,
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Email',
+                      labelStyle: const TextStyle(color: AppColors.textSecondary),
                       hintText: 'your.name@oru.edu',
+                      hintStyle: const TextStyle(color: Color(0xFF666666)),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: AppColors.cardBackground,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+                        borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                       ),
-                      prefixIcon: const Icon(Icons.email),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      ),
+                      prefixIcon: const Icon(Icons.email, color: AppColors.neonBlue),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -165,19 +176,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     validator: Validators.validatePassword,
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Password',
+                      labelStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: AppColors.cardBackground,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+                        borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                       ),
-                      prefixIcon: const Icon(Icons.lock),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      ),
+                      prefixIcon: const Icon(Icons.lock, color: AppColors.neonBlue),
                       // Toggle button to show/hide password
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          color: AppColors.neonBlue,
                         ),
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
@@ -196,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Disable button while loading
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: AppColors.neonBlue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -207,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: Colors.black,
                                 strokeWidth: 2,
                               ),
                             )
@@ -215,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Login',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.white,
+                                color: Colors.black,
                               ),
                             ),
                     ),
@@ -241,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: const Text(
                           'Create account',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: AppColors.neonBlue,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

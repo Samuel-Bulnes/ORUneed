@@ -149,18 +149,19 @@ class _PostScreenState extends State<PostScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Publish job'),
-        content: const Text('Are you sure you want to publish this job?'),
+        backgroundColor: AppColors.cardBackground,
+        title: const Text('Publish job', style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text('Are you sure you want to publish this job?', style: TextStyle(color: AppColors.textPrimary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.neonBlue)),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text(
               'Publish',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.neonBlue),
             ),
           ),
         ],
@@ -243,7 +244,7 @@ class _PostScreenState extends State<PostScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.neonBlue,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -265,24 +266,26 @@ class _PostScreenState extends State<PostScreen> {
               const SizedBox(height: 24),
 
               //***********************************************************************************
-              //  Job title input field - MEJORADO CON BORDES VISIBLES
+              //  Job title input field
               TextFormField(
                 controller: _titleController,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'I need ...',
+                  hintStyle: const TextStyle(color: Color(0xFF666666)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -307,27 +310,29 @@ class _PostScreenState extends State<PostScreen> {
               // Job description section
               const Text(
                 'Description',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
-              // Description field - MEJORADO CON BORDES VISIBLES
+              // Description field
               TextFormField(
                 controller: _descriptionController,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'It\'s a ...',
+                  hintStyle: const TextStyle(color: Color(0xFF666666)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -352,7 +357,7 @@ class _PostScreenState extends State<PostScreen> {
               // Image selection section
               const Text(
                 'Add images',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
 
@@ -408,10 +413,11 @@ class _PostScreenState extends State<PostScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _pickImages,
-                      icon: const Icon(Icons.photo_library),
-                      label: const Text('Gallery'),
+                      icon: const Icon(Icons.photo_library, color: AppColors.neonBlue),
+                      label: const Text('Gallery', style: TextStyle(color: AppColors.neonBlue)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: AppColors.neonBlue, width: 1),
                       ),
                     ),
                   ),
@@ -419,10 +425,11 @@ class _PostScreenState extends State<PostScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _takePhoto,
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Camera'),
+                      icon: const Icon(Icons.camera_alt, color: AppColors.neonBlue),
+                      label: const Text('Camera', style: TextStyle(color: AppColors.neonBlue)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: AppColors.neonBlue, width: 1),
                       ),
                     ),
                   ),
@@ -435,9 +442,9 @@ class _PostScreenState extends State<PostScreen> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     '${_selectedImages.length}/4 images selected',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -448,25 +455,27 @@ class _PostScreenState extends State<PostScreen> {
               // Category selection section
               const Text(
                 'Category',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
+                style: const TextStyle(color: AppColors.textPrimary),
+                dropdownColor: AppColors.cardBackground,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
                   ),
                 ),
                 items: JobCategories.categories.map((category) {
@@ -488,29 +497,32 @@ class _PostScreenState extends State<PostScreen> {
               // Price input section
               const Text(
                 'How much you will pay?',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 8),
-              // Price field - MEJORADO CON BORDES VISIBLES
+              // Price field
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   prefixText: '\$ ',
+                  prefixStyle: const TextStyle(color: AppColors.neonBlue),
                   hintText: '20.00',
+                  hintStyle: const TextStyle(color: Color(0xFF666666)),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -543,7 +555,7 @@ class _PostScreenState extends State<PostScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleSubmit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.neonBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                     ),
@@ -553,7 +565,7 @@ class _PostScreenState extends State<PostScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: Colors.black,
                             strokeWidth: 2,
                           ),
                         )
@@ -561,7 +573,7 @@ class _PostScreenState extends State<PostScreen> {
                           'Publish',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.white,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

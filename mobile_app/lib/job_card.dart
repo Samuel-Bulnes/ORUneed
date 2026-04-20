@@ -105,13 +105,20 @@ class JobCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.neonBlue,
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.neonBlue.withOpacity(0.5),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
                     child: Text(
                       '\$${job.price.toStringAsFixed(0)}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF000000),
                         fontWeight: FontWeight.bold,
                       ),
                     ),

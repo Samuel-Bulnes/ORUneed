@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../services/chat_service.dart';
 import '../models/chat_model.dart';
+import '../utils/constants.dart';
 import 'chat_screen.dart';
 
 //*************************************************************************************
@@ -43,13 +44,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE5E5E5),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Chats',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.neonBlue),
         ),
-        backgroundColor: const Color(0xFF1E1B4B),
+        backgroundColor: AppColors.primary,
         elevation: 0,
       ),
 
@@ -84,22 +85,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   Icon(
                     Icons.chat_bubble_outline,
                     size: 100,
-                    color: Colors.grey[400],
+                    color: const Color(0xFF666666),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'No conversations yet',
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey[600],
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  const Text(
                     'Start a chat from a job post',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Color(0xFF888888),
                     ),
                   ),
                 ],
@@ -173,6 +174,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
+        color: AppColors.cardBackground,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -206,11 +208,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 // User avatar with first letter of name
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: const Color(0xFF1E1B4B),
+                  backgroundColor: AppColors.neonBlue,
                   child: Text(
                     userName.isNotEmpty ? userName[0].toUpperCase() : '?',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -234,6 +236,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                color: AppColors.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -242,8 +245,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           const SizedBox(width: 8),
                           Text(
                             timeStr,
-                            style: TextStyle(
-                              color: Colors.grey[600],
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -255,8 +258,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       if (chat.jobTitle != null) ...[
                         Text(
                           chat.jobTitle!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                             fontStyle: FontStyle.italic,
                           ),
@@ -274,14 +277,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             const Icon(
                               Icons.check,
                               size: 14,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               chat.lastMessage,
-                              style: TextStyle(
-                                color: Colors.grey[700],
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
                                 fontSize: 14,
                               ),
                               maxLines: 1,
@@ -336,7 +339,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       padding: EdgeInsets.all(4),
                       child: Icon(
                         Icons.more_vert,
-                        color: Colors.grey,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -392,14 +395,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove chat'),
+        backgroundColor: AppColors.cardBackground,
+        title: const Text('Remove chat', style: TextStyle(color: AppColors.textPrimary)),
         content: Text(
           'Remove your conversation with $userName from your chat list?',
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.neonBlue)),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),

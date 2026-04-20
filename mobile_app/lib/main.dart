@@ -40,11 +40,41 @@ class MyApp extends StatelessWidget {
       title: 'ORUneed',
       debugShowCheckedModeBanner: false, // Removes debug banner in top-right corner
 
-      // Global theme configuration
+      // Global theme configuration - Dark theme
       theme: ThemeData(
-        primaryColor: const Color(0xFF1E1B4B), //Dark Blue
-        scaffoldBackgroundColor: const Color(0xFFE5E5E5), // Light gray background
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF00D9FF), // Neon blue
+        scaffoldBackgroundColor: const Color(0xFF0F1419), // Almost black background
+        cardColor: const Color(0xFF1A1F2E), // Dark card background
         useMaterial3: true,
+        
+        // Text theme for dark mode
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+          bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          bodySmall: TextStyle(color: Color(0xFFB0B0B0)),
+          headlineSmall: TextStyle(color: Color(0xFFFFFFFF)),
+          headlineMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          headlineLarge: TextStyle(color: Color(0xFFFFFFFF)),
+          labelLarge: TextStyle(color: Color(0xFFFFFFFF)),
+          labelMedium: TextStyle(color: Color(0xFFB0B0B0)),
+        ),
+        
+        // Input decoration theme
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF1A1F2E),
+          labelStyle: const TextStyle(color: Color(0xFFB0B0B0)),
+          hintStyle: const TextStyle(color: Color(0xFF666666)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF00D9FF)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF00FFFF), width: 2),
+          ),
+        ),
       ),
 
       // First widget shown: decides to show login or home

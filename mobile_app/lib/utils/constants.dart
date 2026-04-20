@@ -8,20 +8,25 @@
 import 'package:flutter/material.dart';
 
 //***********************************************************************************
-// App Colors
+// App Colors - Dark Theme with Neon Accents
 class AppColors {
-  static const Color primary = Color(0xFF1E1B4B);
-  static const Color background = Color(0xFFE5E5E5);
-  static const Color cardBackground = Colors.white;
-  static const Color textPrimary = Color(0xFF1E1B4B);
-  static const Color textSecondary = Colors.grey;
+  // Dark theme primary colors
+  static const Color primary = Color(0xFF0A0E27);      // Deep dark blue
+  static const Color background = Color(0xFF0F1419);   // Almost black background
+  static const Color cardBackground = Color(0xFF1A1F2E); // Dark card background
+  static const Color textPrimary = Color(0xFFFFFFFF);  // White text
+  static const Color textSecondary = Color(0xFFB0B0B0); // Light gray text
   
-  // Cards colors (Pastel Colors)
-  static const Color pink = Color(0xFFFFB6C1);
-  static const Color orange = Color(0xFFFFDAB9);
-  static const Color green = Color(0xFF90EE90);
-  static const Color yellow = Color(0xFFFFFFE0);
-  static const Color purple = Color(0xFFDDA0DD);
+  // Neon accent colors
+  static const Color neonBlue = Color(0xFF00D9FF);     // Bright cyan neon
+  static const Color neonAccent = Color(0xFF00FFFF);   // Electric cyan
+  
+  // Cards colors (Adjusted for dark theme)
+  static const Color pink = Color(0xFFFF006E);
+  static const Color orange = Color(0xFFFF6B35);
+  static const Color green = Color(0xFF00D977);
+  static const Color yellow = Color(0xFFFFD60A);
+  static const Color purple = Color(0xFF9D4EDD);
 }
 
 //***********************************************************************************

@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? AppBar(
               title: const Text(AppStrings.appName),
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.neonBlue,
               centerTitle: true,
             )
           : null,
@@ -119,8 +119,9 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppColors.cardBackground,
+        selectedItemColor: AppColors.neonBlue,
+        unselectedItemColor: const Color(0xFF666666),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
@@ -158,28 +159,32 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(AppSizes.paddingLarge),
           child: TextField(
             controller: _searchController,
+            style: const TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search jobs...',
-              prefixIcon: const Icon(Icons.search),
+              hintStyle: const TextStyle(color: Color(0xFF666666)),
+              prefixIcon: const Icon(Icons.search, color: AppColors.neonBlue),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
+                      icon: const Icon(Icons.clear, color: AppColors.neonBlue),
                       onPressed: () {
                         _searchController.clear();
                       },
                     )
                   : null,
+              filled: true,
+              fillColor: AppColors.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: Colors.grey, width: 1),
+                borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: Colors.grey, width: 1),
+                borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
               ),
             ),
             onChanged: (value) {
@@ -219,11 +224,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       _filterProvider.setCategory(category);
                     });
                   },
-                  backgroundColor: Colors.grey[200],
-                  selectedColor: AppColors.primary.withOpacity(0.8),
+                  backgroundColor: AppColors.cardBackground,
+                  selectedColor: AppColors.neonBlue.withOpacity(0.8),
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
+                    color: isSelected ? Colors.black : AppColors.textPrimary,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  side: const BorderSide(
+                    color: AppColors.neonBlue,
+                    width: 1,
                   ),
                 );
               },
@@ -281,31 +290,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 Icon(
                   Icons.work_outline,
                   size: 80,
-                  color: Colors.grey[400],
+                  color: const Color(0xFF666666),
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'No jobs available',
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey[600],
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 if (jobs.isEmpty)
-                  Text(
+                  const Text(
                     'Be the first to post!',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Color(0xFF888888),
                     ),
                   )
                 else
-                  Text(
+                  const Text(
                     'No jobs found with these filters',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Color(0xFF888888),
                     ),
                   ),
                 if (jobs.isNotEmpty && filteredJobs.isEmpty)
@@ -315,13 +324,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       _searchController.clear();
                       setState(() {});
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                    child: const Padding(
+                      padding: EdgeInsets.only(top: 16),
                       child: Text(
                         'Clear filters',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.primary,
+                          color: AppColors.neonBlue,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -339,8 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: const Icon(Icons.add),
                       label: const Text('Create Post'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.neonBlue,
+                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 12,

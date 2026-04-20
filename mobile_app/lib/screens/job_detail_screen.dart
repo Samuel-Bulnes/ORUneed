@@ -41,7 +41,7 @@ class JobDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.neonBlue,
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -52,16 +52,16 @@ class JobDetailScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 200,
-              color: AppColors.background,
+              color: AppColors.cardBackground,
               child: Center(
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.neonBlue,
                   // Display first letter of username as avatar
                   child: Text(
                     job.userName[0].toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                     ),
