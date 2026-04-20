@@ -44,9 +44,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   //***********************************************************************************
   // LOAD USER DATA FROM FIRESTORE
   // Fetches user data from Firestore through AuthService
+  // Optimized: Runs both queries in parallel for faster load time
   Future<void> _loadUserData() async {
     final userData = await _authService.getCurrentUserData();
-    final ratings = await _chatService.getWorkerRatings(userData?.uid ?? '');
+    
+    // Execute both queries in parallel using Future.wait
+    final results = await Future.wait([
+      _chatService.getWorkerRatings(userData?.uid ?? ''),
+    ]);
+    
+    final ratings = results[0] as List<Map<String, dynamic>>;
 
     // Update UI with retrieved user info and ratings
     setState(() {

@@ -392,12 +392,15 @@ class ChatService {
   //*********************************************************************************
   // GET WORKER RATINGS - Retrieves all completed jobs where user was the worker
   // Returns a list of chats with workerRating for the profile reviews section
+  // Optimized: Limited to last 50 results for faster queries
   Future<List<Map<String, dynamic>>> getWorkerRatings(String userId) async {
     try {
       final completedChats = await _firestore
           .collection('chats')
           .where('workerId', isEqualTo: userId)  // User is the worker
           .where('jobStatus', isEqualTo: 'completed')  // Job is completed
+          .orderBy('completionFinalizedAt', descending: true)  // Newest first
+          .limit(50)  // Only fetch last 50 completed jobs
           .get();
 
       final ratings = <Map<String, dynamic>>[];
@@ -428,14 +431,7 @@ class ChatService {
         }
       }
 
-      // Sort by most recent first
-      ratings.sort((a, b) {
-        final dateA = a['completedAt'] as DateTime?;
-        final dateB = b['completedAt'] as DateTime?;
-        if (dateA == null || dateB == null) return 0;
-        return dateB.compareTo(dateA);
-      });
-
+      // Already sorted by query (orderBy), no need to sort again
       return ratings;
     } catch (e) {
       print('Error fetching worker ratings: $e');
