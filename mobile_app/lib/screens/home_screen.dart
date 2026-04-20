@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Show app bar only on home page (index 0)
       appBar: _selectedIndex == 0
           ? AppBar(
-              title: const Text(AppStrings.appName),
+              title: const Text('ORUneed'),
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.neonBlue,
               centerTitle: true,
@@ -176,15 +176,15 @@ class _HomeScreenState extends State<HomeScreen> {
               fillColor: AppColors.cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                borderSide: const BorderSide(color: Color(0xFF444444)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                borderSide: const BorderSide(color: Color(0xFF444444)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
               ),
             ),
             onChanged: (value) {
@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                   side: const BorderSide(
-                    color: AppColors.neonBlue,
+                    color: Color(0xFF444444),
                     width: 1,
                   ),
                 );

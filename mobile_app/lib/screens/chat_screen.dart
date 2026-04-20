@@ -14,6 +14,7 @@ import '../services/chat_service.dart';
 import '../services/socket_service.dart';
 import '../services/firestore_service.dart';
 import '../models/message_model.dart';
+import '../utils/constants.dart';
 
 //*************************************************************************************
 // Screen that displays a one-on-one chat conversation
@@ -229,11 +230,11 @@ class _ChatScreenState extends State<ChatScreen> {
             : widget.otherUserName;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFE5E5E5),
+          backgroundColor: AppColors.background,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF1E1B4B),
+            backgroundColor: AppColors.primary,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: AppColors.neonBlue),
               onPressed: () => Navigator.pop(context),
             ),
             title: Column(
@@ -242,8 +243,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Display other user's name
                 Text(
                   widget.otherUserName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.neonBlue,
                     fontSize: 18,
                   ),
                 ),
@@ -251,8 +252,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (widget.jobTitle != null)
                   Text(
                     widget.jobTitle!,
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -278,7 +279,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ? 'Completed'
                           : (currentConfirmed ? 'Confirmed' : 'Complete'),
                       style: TextStyle(
-                        color: bothConfirmed ? Colors.greenAccent : Colors.white,
+                        color: bothConfirmed ? Colors.greenAccent : AppColors.neonBlue,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -306,12 +307,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   builder: (context, snapshot) {
                     // Show loading indicator while fetching messages
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(child: CircularProgressIndicator(color: AppColors.neonBlue));
                     }
 
                     // Handle errors
                     if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                      return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.textPrimary)));
                     }
 
                     final messages = snapshot.data ?? [];
@@ -321,7 +322,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       return Center(
                         child: Text(
                           'Start the conversation!',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       );
                     }
@@ -377,12 +378,16 @@ class _ChatScreenState extends State<ChatScreen> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: Colors.green[100],
-        child: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green),
+        color: AppColors.cardBackground,
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          border: Border.all(color: Colors.green, width: 2),
+        ),
+        child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: Colors.green),
             SizedBox(width: 10),
-            Expanded(
+            const Expanded(
               child: Text(
                 'Job completed by both parties.',
                 style: TextStyle(
@@ -400,26 +405,29 @@ class _ChatScreenState extends State<ChatScreen> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
-        color: Colors.orange[100],
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          border: Border.all(color: Colors.orange, width: 2),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Work completion reported by $requestedByName.',
-              style: const TextStyle(
-                color: Colors.orange,
+              style: TextStyle(
+                color: AppColors.neonBlue,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Rate the work to confirm:',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Rating:'),
+                Text('Rating:', style: TextStyle(color: AppColors.textPrimary)),
                 const SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _selectedSurveyRating,
@@ -462,16 +470,19 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.blue[100],
-      child: const Row(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        border: Border.all(color: AppColors.neonBlue, width: 2),
+      ),
+      child: Row(
         children: [
-          Icon(Icons.hourglass_bottom, color: Colors.blue),
+          Icon(Icons.hourglass_bottom, color: AppColors.neonBlue),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               'You already confirmed. Waiting for the other person to confirm.',
               style: TextStyle(
-                color: Colors.blue,
+                color: AppColors.neonBlue,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -495,7 +506,8 @@ class _ChatScreenState extends State<ChatScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Confirm completed work'),
+              backgroundColor: AppColors.cardBackground,
+              title: Text('Confirm completed work', style: TextStyle(color: AppColors.textPrimary)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,11 +516,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     isWorker
                         ? 'The payer will be notified to confirm and rate the work.'
                         : 'Your confirmation will finalize the job.',
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
                   // Rating picker only shown to the poster (payer)
                   if (!isWorker) ...[
                     const SizedBox(height: 12),
-                    const Text('Rate the work:'),
+                    Text('Rate the work:', style: TextStyle(color: AppColors.textPrimary)),
                     const SizedBox(height: 8),
                     DropdownButton<int>(
                       value: tempRating,
@@ -531,7 +544,7 @@ class _ChatScreenState extends State<ChatScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel', style: TextStyle(color: AppColors.neonBlue)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -542,11 +555,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E1B4B),
+                    backgroundColor: AppColors.neonBlue,
                   ),
                   child: const Text(
                     'Confirm',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
               ],
@@ -608,8 +621,8 @@ class _ChatScreenState extends State<ChatScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          // Dark color for current user, white for other user
-          color: isMe ? const Color(0xFF1E1B4B) : Colors.white,
+          // Neon blue for current user, darker for other user
+          color: isMe ? AppColors.neonBlue : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
         ),
         constraints: BoxConstraints(
@@ -623,7 +636,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               message.text,
               style: TextStyle(
-                color: isMe ? Colors.white : Colors.black87,
+                color: isMe ? Colors.black : AppColors.textPrimary,
                 fontSize: 15,
               ),
             ),
@@ -632,7 +645,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               DateFormat('h:mm a').format(message.timestamp),
               style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.grey[600],
+                color: isMe ? Colors.black54 : AppColors.textSecondary,
                 fontSize: 11,
               ),
             ),
@@ -651,7 +664,7 @@ class _ChatScreenState extends State<ChatScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -696,7 +709,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.white,
+      color: AppColors.cardBackground,
       child: Row(
         children: [
           // Text input field
@@ -704,14 +717,23 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _messageController,
               onChanged: _onTextChanged,
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Write a message...',
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
-                fillColor: const Color(0xFFE5E5E5),
+                fillColor: AppColors.background,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: Color(0xFF444444)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: Color(0xFF444444)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide(color: AppColors.neonBlue, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -726,13 +748,13 @@ class _ChatScreenState extends State<ChatScreen> {
             onTap: _sendMessage,
             child: Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E1B4B),
+              decoration: BoxDecoration(
+                color: AppColors.neonBlue,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.send,
-                color: Colors.white,
+                color: Colors.black,
                 size: 24,
               ),
             ),

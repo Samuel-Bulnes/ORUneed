@@ -46,11 +46,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Chats',
-          style: TextStyle(color: AppColors.neonBlue),
-        ),
+        title: const Text('ORUneed'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.neonBlue,
+        centerTitle: true,
         elevation: 0,
       ),
 

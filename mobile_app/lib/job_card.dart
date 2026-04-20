@@ -38,7 +38,7 @@ class JobCard extends StatelessWidget {
         horizontal: AppSizes.paddingMedium,
         vertical: AppSizes.paddingSmall,
       ),
-
+      color: AppColors.cardBackground,
       elevation: AppSizes.cardElevation, // Card shadow depth
 
       // Rounded corners for the card
@@ -83,6 +83,7 @@ class JobCard extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: AppColors.textPrimary,
                           ),
                         ),
 
@@ -178,7 +179,7 @@ class JobCard extends StatelessWidget {
                         width: 80,
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Colors.grey[800],
                           borderRadius: BorderRadius.circular(8),
                         ),
 
@@ -199,7 +200,7 @@ class JobCard extends StatelessWidget {
                                     // Fallback UI if loading fails
                                     return const Center(
                                       child:
-                                          Icon(Icons.image, color: Colors.grey),
+                                          Icon(Icons.image, color: Color(0xFF888888)),
                                     );
                                   },
                                 )
@@ -207,7 +208,7 @@ class JobCard extends StatelessWidget {
                               // Placeholder for future Firestore/Cloud images
                               : const Center(
                                   child:
-                                      Icon(Icons.image, color: Colors.grey),
+                                      Icon(Icons.image, color: Color(0xFF888888)),
                                 ),
                         ),
                       );

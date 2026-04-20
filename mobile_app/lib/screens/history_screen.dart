@@ -38,7 +38,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (userId == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('History'),
+          title: const Text('ORUneed'),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.neonBlue,
           centerTitle: true,
@@ -51,7 +51,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('History'),
+        title: const Text('ORUneed'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.neonBlue,
         centerTitle: true,

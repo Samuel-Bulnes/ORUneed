@@ -46,29 +46,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Fetches user data from Firestore through AuthService
   // Optimized: Runs both queries in parallel for faster load time
   Future<void> _loadUserData() async {
-    final userData = await _authService.getCurrentUserData();
-    
-    // Execute both queries in parallel using Future.wait
-    final results = await Future.wait([
-      _chatService.getWorkerRatings(userData?.uid ?? ''),
-    ]);
-    
-    final ratings = results[0] as List<Map<String, dynamic>>;
-
-    // Update UI with retrieved user info and ratings
-    setState(() {
-      _currentUser = userData;
-      _ratings = ratings;
-      _isLoading = false;
-    });
+    try {
+      // Get current user ID first (fast operation)
+      final currentUserId = _authService.currentUser?.uid;
+      if (currentUserId == null) return;
+      
+      // Load user data immediately (this is essential)
+      final userData = await _authService.getCurrentUserData();
+      
+      if (mounted) {
+        setState(() {
+          _currentUser = userData;
+          _isLoading = false;
+        });
+      }
+      
+      // Load ratings with timeout (non-blocking, so UI is already shown)
+      try {
+        final ratings = await _chatService.getWorkerRatings(currentUserId)
+            .timeout(const Duration(seconds: 5));
+        
+        if (mounted) {
+          setState(() {
+            _ratings = ratings;
+          });
+        }
+      } catch (e) {
+        print('Timeout loading ratings: $e');
+        // Continue without ratings if it times out
+        if (mounted) {
+          setState(() {
+            _ratings = [];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading profile data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Show loading indicator while fetching data
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: const Center(child: CircularProgressIndicator(color: AppColors.neonBlue)),
       );
     }
 
@@ -76,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_currentUser == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text(AppStrings.appName),
+          title: const Text('ORUneed'),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.neonBlue,
           centerTitle: true,
@@ -120,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   //App Bar
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.appName),
+        title: const Text('ORUneed'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.neonBlue,
         centerTitle: true,
@@ -172,6 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
 
@@ -199,6 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
 
@@ -209,13 +239,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Color(0xFF444444)),
                       ),
                       child: const Text(
                         'No reviews yet. Complete jobs to receive reviews!',
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -268,7 +299,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(width: 8),
         Text(
           '${avg.toStringAsFixed(1)} (${_ratings.length})',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
       ],
     );
@@ -291,9 +322,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Color(0xFF444444)),
       ),
       child: Row(
         children: [
@@ -319,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Reviewer name
                 Text(
                   raterName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 4),
                 // Date
@@ -327,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   dateStr,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],

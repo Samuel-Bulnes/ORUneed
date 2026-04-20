@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: const Color(0xFF00D9FF), // Neon blue
-        scaffoldBackgroundColor: const Color(0xFF0F1419), // Almost black background
+        scaffoldBackgroundColor: const Color(0xFF000000), // Pure black background
         cardColor: const Color(0xFF1A1F2E), // Dark card background
         useMaterial3: true,
         

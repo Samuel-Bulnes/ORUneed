@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 // App Colors - Dark Theme with Neon Accents
 class AppColors {
   // Dark theme primary colors
-  static const Color primary = Color(0xFF0A0E27);      // Deep dark blue
-  static const Color background = Color(0xFF0F1419);   // Almost black background
+  static const Color primary = Color(0xFF0A0E27);      // Dark blue (AppBar/Logo bg)
+  static const Color background = Color(0xFF000000);   // Pure black background for screens
   static const Color cardBackground = Color(0xFF1A1F2E); // Dark card background
   static const Color textPrimary = Color(0xFFFFFFFF);  // White text
   static const Color textSecondary = Color(0xFFB0B0B0); // Light gray text

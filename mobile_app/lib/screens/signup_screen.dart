@@ -188,15 +188,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fillColor: AppColors.cardBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                     ),
                     prefixIcon: const Icon(Icons.person, color: AppColors.neonBlue),
                   ),
@@ -219,15 +219,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fillColor: AppColors.cardBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                     ),
                     prefixIcon: const Icon(Icons.email, color: AppColors.neonBlue),
                   ),
@@ -248,15 +248,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fillColor: AppColors.cardBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                     ),
                     prefixIcon: const Icon(Icons.lock, color: AppColors.neonBlue),
 
@@ -288,15 +288,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fillColor: AppColors.cardBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                      borderSide: const BorderSide(color: Color(0xFF444444)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                      borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                     ),
                     prefixIcon: const Icon(Icons.lock_outline, color: AppColors.neonBlue),
 

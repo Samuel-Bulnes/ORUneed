@@ -242,7 +242,7 @@ class _PostScreenState extends State<PostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.appName),
+        title: const Text('ORUneed'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.neonBlue,
         centerTitle: true,
@@ -277,15 +277,15 @@ class _PostScreenState extends State<PostScreen> {
                   fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -324,15 +324,15 @@ class _PostScreenState extends State<PostScreen> {
                   fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
@@ -417,7 +417,7 @@ class _PostScreenState extends State<PostScreen> {
                       label: const Text('Gallery', style: TextStyle(color: AppColors.neonBlue)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.neonBlue, width: 1),
+                        side: const BorderSide(color: Color(0xFF444444), width: 1),
                       ),
                     ),
                   ),
@@ -429,7 +429,7 @@ class _PostScreenState extends State<PostScreen> {
                       label: const Text('Camera', style: TextStyle(color: AppColors.neonBlue)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.neonBlue, width: 1),
+                        side: const BorderSide(color: Color(0xFF444444), width: 1),
                       ),
                     ),
                   ),
@@ -467,15 +467,15 @@ class _PostScreenState extends State<PostScreen> {
                   fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                   ),
                 ),
                 items: JobCategories.categories.map((category) {
@@ -514,15 +514,15 @@ class _PostScreenState extends State<PostScreen> {
                   fillColor: AppColors.cardBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 1),
+                    borderSide: const BorderSide(color: Color(0xFF444444)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                    borderSide: const BorderSide(color: AppColors.neonAccent, width: 2),
+                    borderSide: const BorderSide(color: AppColors.neonBlue, width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppSizes.borderRadius),
