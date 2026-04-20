@@ -395,6 +395,8 @@ class ChatService {
   // Optimized: Limited to last 50 results for faster queries
   Future<List<Map<String, dynamic>>> getWorkerRatings(String userId) async {
     try {
+      print('🔍 getWorkerRatings: Fetching ratings for userId=$userId');
+      
       final completedChats = await _firestore
           .collection('chats')
           .where('workerId', isEqualTo: userId)  // User is the worker
@@ -403,11 +405,20 @@ class ChatService {
           .limit(50)  // Only fetch last 50 completed jobs
           .get();
 
+      print('✅ getWorkerRatings: Found ${completedChats.docs.length} completed chats');
+
       final ratings = <Map<String, dynamic>>[];
 
       for (var doc in completedChats.docs) {
         final data = doc.data();
         final rating = data['workerRating'] as int?;
+        print('   - Chat ${doc.id}: workerId=${data['workerId']}, jobStatus=${data['jobStatus']}, workerRating=$rating');
+        
+        if (rating == null) {
+          print('     ⚠️  Skipping: no rating');
+          continue;
+        }
+        
         final raterName = data['participantNames']?[(data['participantIds'] as List?)?.firstWhere(
           (id) => id != userId,
           orElse: () => '',
@@ -420,21 +431,20 @@ class ChatService {
           completionDate = completedAt.toDate();
         }
 
-        // Only add if there's a rating
-        if (rating != null) {
-          ratings.add({
-            'rating': rating,
-            'raterName': raterName,
-            'completedAt': completionDate,
-            'chatId': doc.id,
-          });
-        }
+        // Add rating
+        ratings.add({
+          'rating': rating,
+          'raterName': raterName,
+          'completedAt': completionDate,
+          'chatId': doc.id,
+        });
+        print('     ✨ Added: rating=$rating, rater=$raterName');
       }
 
-      // Already sorted by query (orderBy), no need to sort again
+      print('📊 getWorkerRatings: Returning ${ratings.length} ratings');
       return ratings;
     } catch (e) {
-      print('Error fetching worker ratings: $e');
+      print('❌ Error fetching worker ratings: $e');
       return [];
     }
   }

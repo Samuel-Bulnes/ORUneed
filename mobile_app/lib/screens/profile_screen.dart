@@ -47,38 +47,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Optimized: Runs both queries in parallel for faster load time
   Future<void> _loadUserData() async {
     try {
-      // Get current user ID first (fast operation)
-      final currentUserId = _authService.currentUser?.uid;
-      if (currentUserId == null) return;
-      
-      // Load user data immediately (this is essential)
       final userData = await _authService.getCurrentUserData();
       
+      // Execute both queries in parallel using Future.wait
+      final results = await Future.wait([
+        _chatService.getWorkerRatings(userData?.uid ?? ''),
+      ]);
+      
+      final ratings = results[0] as List<Map<String, dynamic>>;
+
+      // Update UI with retrieved user info and ratings
       if (mounted) {
         setState(() {
           _currentUser = userData;
+          _ratings = ratings;
           _isLoading = false;
         });
-      }
-      
-      // Load ratings with timeout (non-blocking, so UI is already shown)
-      try {
-        final ratings = await _chatService.getWorkerRatings(currentUserId)
-            .timeout(const Duration(seconds: 5));
-        
-        if (mounted) {
-          setState(() {
-            _ratings = ratings;
-          });
-        }
-      } catch (e) {
-        print('Timeout loading ratings: $e');
-        // Continue without ratings if it times out
-        if (mounted) {
-          setState(() {
-            _ratings = [];
-          });
-        }
       }
     } catch (e) {
       print('Error loading profile data: $e');
