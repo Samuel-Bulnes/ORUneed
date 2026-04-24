@@ -24,6 +24,7 @@ class JobCategories {
     'Other',
   ];
 
+  // Map of category names to icons for UI display
   static const Map<String, IconData> categoryIcons = {
     'All': Icons.apps,
     'Cleaning': Icons.cleaning_services,
@@ -99,3 +100,5 @@ class JobFilterProvider extends ChangeNotifier {
     return true;
   }
 }
+
+//104 lines of code on this file

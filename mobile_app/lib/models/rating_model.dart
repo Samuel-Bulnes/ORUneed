@@ -70,3 +70,5 @@ class Rating {
     );
   }
 }
+
+//73 lines of code on this file
