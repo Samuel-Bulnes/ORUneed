@@ -26,6 +26,8 @@ class PostScreen extends StatefulWidget {
   State<PostScreen> createState() => _PostScreenState();
 }
 
+//*****************************************************************************************
+// Main state for the post screen, handling form input, image selection, and job submission
 class _PostScreenState extends State<PostScreen> {
   // Form validation key
   final _formKey = GlobalKey<FormState>();
@@ -586,3 +588,4 @@ class _PostScreenState extends State<PostScreen> {
     );
   }
 }
+// 591 lines of code in this file

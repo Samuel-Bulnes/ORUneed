@@ -14,7 +14,7 @@ import '../utils/constants.dart';
 import 'chat_screen.dart';
 
 //*************************************************************************************
-// Screen that displays a list of all active chats for the current user
+//  ChatListScreen - Shows all active chats for the logged-in user
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({Key? key}) : super(key: key);
 
@@ -30,6 +30,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void initState() {
     super.initState();
+
     // Get the current user's ID from Firebase Auth
     _currentUserId = FirebaseAuth.instance.currentUser?.uid;
   }
@@ -57,9 +58,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
       // CHAT LIST
       // Displays real-time list of user's chats using Firestore stream
       body: StreamBuilder<List<Chat>>(
+
         // Listen to real-time updates of user's chats
         stream: _chatService.getUserChats(_currentUserId!),
         builder: (context, snapshot) {
+
           // Show loading indicator while waiting for data
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -114,8 +117,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
             itemCount: chats.length,
             itemBuilder: (context, index) {
               final chat = chats[index];
+
               // Get the name of the other participant in the chat
               final otherUserName = chat.getOtherUserName(_currentUserId!);
+
               // Check if current user sent the last message
               final isLastMessageMine = chat.lastSenderId == _currentUserId;
 
@@ -140,10 +145,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
     required String userName,
     required bool isLastMessageMine,
   }) {
+
     // Format the timestamp for display
     final timeStr = _formatTime(chat.updatedAt);
     final isDeleting = _deletingChatIds.contains(chat.id);
 
+    //*************************************************************************************
+    // Dismissible card: swipe left to delete, locked while a deletion is in progress
     return Dismissible(
       key: ValueKey(chat.id),
       direction: isDeleting ? DismissDirection.none : DismissDirection.endToStart,
@@ -182,6 +190,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           onTap: isDeleting
               ? null
               : () {
+
                   // Navigate to the chat conversation screen
                   Navigator.push(
                     context,
@@ -204,6 +213,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+
                 // User avatar with first letter of name
                 CircleAvatar(
                   radius: 28,
@@ -225,6 +235,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+
                       // Row with user name and timestamp
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -271,6 +282,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       // Last message preview
                       Row(
                         children: [
+
                           // Show check icon if current user sent the last message
                           if (isLastMessageMine)
                             const Icon(
@@ -416,16 +428,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
     );
 
+    // User cancelled or widget was unmounted
     if (shouldDelete != true || !mounted) {
       return false;
     }
 
+    // Lock the card while the delete request is in progress
     setState(() => _deletingChatIds.add(chatId));
 
     try {
       final deletedForEveryone =
           await _chatService.deleteChat(chatId, _currentUserId!);
 
+      // Notify the user whether the chat was removed for both sides or just theirs
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -449,6 +464,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       }
       return false;
     } finally {
+
+      // Always unlock the card regardless of the result
       if (mounted) {
         setState(() => _deletingChatIds.remove(chatId));
       }
@@ -480,3 +497,4 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 }
+// 500 lines of code in this file

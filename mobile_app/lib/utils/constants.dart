@@ -47,3 +47,5 @@ class AppSizes {
   static const double borderRadius = 12.0;
   static const double cardElevation = 2.0;
 }
+
+// 51 lies of code in this file

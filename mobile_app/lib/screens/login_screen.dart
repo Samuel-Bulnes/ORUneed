@@ -23,6 +23,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 //*************************************************************************************
+// Main login screen state
 class _LoginScreenState extends State<LoginScreen> {
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
@@ -106,6 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return 'Login failed. Please try again.';
   }
 
+  //***********************************************************************************
+  // Builds the login screen UI with form fields and buttons
   @override
   Widget build(BuildContext context) {
     return Scaffold(

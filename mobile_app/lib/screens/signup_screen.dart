@@ -11,7 +11,7 @@ import 'package:mobile_app/utils/constants.dart';
 import 'package:mobile_app/utils/validators.dart';
 
 //*************************************************************************************
-//// Sign up screen for creating new user accounts
+// Sign up screen for creating new user accounts
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -19,6 +19,8 @@ class SignUpScreen extends StatefulWidget {
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
+//**************************************************************************************
+// Main state for the sign-up screen, managing form input, validation, and sign-up logic
 class _SignUpScreenState extends State<SignUpScreen> {
   // Global form key used to validate form fields
   final _formKey = GlobalKey<FormState>();
@@ -130,6 +132,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return 'Sign up failed. Please try again.';
   }
 
+  //***********************************************************************************
+  // Builds the sign-up form UI with fields for name, email, password, and confirm
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -355,3 +359,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 }
+// 362 lines of code in this file

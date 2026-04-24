@@ -49,6 +49,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
+    //**********************************************************************************
+    // StreamBuilder to listen to user's job history in real-time
     return Scaffold(
       appBar: AppBar(
         title: const Text('ORUneed'),
@@ -118,7 +120,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          // Success state - display list of jobs
+          // Success state -> display list of jobs
           final jobs = snapshot.data!;
 
           return RefreshIndicator(
@@ -150,3 +152,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 }
+// 155 lines of code in this file

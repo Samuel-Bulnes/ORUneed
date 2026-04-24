@@ -2,7 +2,7 @@
  * Samuel Bulnes
  * Senior Project
  * Main file
- * Everything starts from here.
+ * Defines the JobCard widget used to display job information in the feed
 */
 
 import 'package:flutter/material.dart';
@@ -12,11 +12,7 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 
 //***********************************************************************************
-/* 
-*  A reusable card widget that displays job information in the feed
-*  Shows job title, description, price, user info, and images
-*  Used in the home screen to display all available jobs
-*/
+// Widget that displays job information in a card format for the feed
 class JobCard extends StatelessWidget {
   final JobModel job; // The job data to display in this card
   final VoidCallback onTap;
@@ -30,6 +26,7 @@ class JobCard extends StatelessWidget {
   });
 
   //*********************************************************************************
+  // BUILD METHOD
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -252,3 +249,4 @@ class JobCard extends StatelessWidget {
     }
   }
 }
+// 252 lines of code in this file

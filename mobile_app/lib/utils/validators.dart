@@ -6,7 +6,8 @@
 */
 
 //***********************************************************************************
-// Contains helper functions to validate user input in forms used throughout the app for email, password, and name validation
+// Contains helper functions to validate user input in forms used throughout the app 
+// for email, password, and name validation
 class Validators {
 
   //*********************************************************************************
@@ -60,3 +61,5 @@ class Validators {
     return null;
   }
 }
+
+// 65 lines of code in this file

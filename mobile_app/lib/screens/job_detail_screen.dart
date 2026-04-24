@@ -37,6 +37,7 @@ class JobDetailScreen extends StatelessWidget {
     // Check if current user is the job owner
     final isOwnJob = currentUserId == job.userId;
 
+    // If no user is logged in, show error message
     return Scaffold(
       appBar: AppBar(
         title: const Text('ORUneed'),

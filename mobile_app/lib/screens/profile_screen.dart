@@ -20,6 +20,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+//*************************************************************************************
+// Main profile screen state
 class _ProfileScreenState extends State<ProfileScreen> {
   // Authentication service to handle user session and data retrieval
   final _authService = AuthService();
@@ -41,10 +43,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  //***********************************************************************************
-  // LOAD USER DATA FROM FIRESTORE
-  // Fetches user data from Firestore through AuthService
-  // Optimized: Runs both queries in parallel for faster load time
+  /*
+  **********************************************************************************
+  / Load user data from firestore
+  / Fetches user data from Firestore through AuthService
+  / Optimized: Runs both queries in parallel for faster load time
+  */
+
   Future<void> _loadUserData() async {
     try {
       final userData = await _authService.getCurrentUserData();
@@ -74,6 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  //*************************************************************************************
+  // Builds the profile screen UI based on loading state and user data
   @override
   Widget build(BuildContext context) {
     // Show loading indicator while fetching data
@@ -264,6 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     int fullStars = avg.toInt();
     bool hasHalfStar = (avg - fullStars) >= 0.5;
 
+    // Display average rating with stars and count
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -302,6 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       dateStr = '${completedAt.month}/${completedAt.day}/${completedAt.year}';
     }
 
+    // Build review card UI
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -361,5 +370,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
-
+// 373 lines of code in this file

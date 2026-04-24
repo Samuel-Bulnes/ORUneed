@@ -11,10 +11,11 @@ import '../models/user_model.dart';
 
 //***********************************************************************************
 // Authentication service that manages all user authentication operations
+
 class AuthService {
   // TESTING MODE: Set to false to skip email verification (for quick testing)
   // Change to true when ready for production
-  static const bool enableEmailVerification = false;
+  static const bool enableEmailVerification = true;
 
   // Firebase Authentication instance for handling auth operations
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -30,7 +31,7 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   //*********************************************************************************
-  // SIGN UP PROCESS – Creates user only in Firebase Auth + Sends verification
+  // Creates user only in Firebase Auth + Sends verification
   // Creates user account in Firebase Auth and sends verification email
   Future<void> signUp({
     required String email,
@@ -85,7 +86,7 @@ class AuthService {
   }
 
   //*********************************************************************************
-  // SIGN UP PROCESS – Requires verified email + Creates Firestore profile
+  //Requires verified email + Creates Firestore profile
   Future<UserModel?> signIn({
     required String email,
     required String password,
@@ -151,7 +152,7 @@ class AuthService {
   }
 
   //*********************************************************************************
-  // SIGN OUT - Logs out the current user
+  // Logs out the current user
   Future<void> signOut() async {
     await _auth.signOut();
   }
@@ -180,7 +181,6 @@ class AuthService {
 
   //*********************************************************************************
   // Resend verification email
-  // Useful if user loses or never receives the verification email]
   Future<void> resendVerificationEmail() async {
     User? user = _auth.currentUser;
 

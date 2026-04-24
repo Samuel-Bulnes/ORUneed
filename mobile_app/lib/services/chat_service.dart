@@ -161,6 +161,7 @@ class ChatService {
     bool finalizedInChat = false;
     String? workerIdForRating;
 
+    // Update chat document with this user's confirmation
     try {
       await _firestore.runTransaction((transaction) async {
         final chatSnap = await transaction.get(chatRef);
@@ -168,6 +169,7 @@ class ChatService {
           throw Exception('Chat not found');
         }
 
+        // Get current confirmation state and participant info
         final chatData = chatSnap.data() as Map<String, dynamic>;
         final participantIds =
             List<String>.from(chatData['participantIds'] ?? const []);
@@ -181,6 +183,7 @@ class ChatService {
 
         confirmations[userId] = true;
 
+        // Update chat with this user's confirmation
         final updates = <String, dynamic>{
           'completionRequested': true,
           'completionConfirmations.$userId': true,
@@ -189,9 +192,11 @@ class ChatService {
           'updatedAt': FieldValue.serverTimestamp(),
         };
 
+        // Check if all participants have confirmed completion
         final allConfirmed = participantIds.isNotEmpty &&
             participantIds.every((id) => confirmations[id] == true);
 
+        // If all have confirmed, finalize completion in chat and prepare for rating
         if (allConfirmed) {
           updates['completionFinalizedAt'] = FieldValue.serverTimestamp();
           updates['jobStatus'] = 'completed';
@@ -345,6 +350,7 @@ class ChatService {
     final chatRef = _firestore.collection('chats').doc(chatId);
     bool deletePermanently = false;
 
+    // Mark chat as deleted for this user and check if both users have deleted
     try {
       await _firestore.runTransaction((transaction) async {
         final chatSnap = await transaction.get(chatRef);
@@ -352,6 +358,7 @@ class ChatService {
           throw Exception('Chat not found');
         }
 
+        // Get current participant and deletion state
         final chatData = chatSnap.data() as Map<String, dynamic>;
         final participantIds =
             List<String>.from(chatData['participantIds'] ?? const []);
@@ -360,14 +367,17 @@ class ChatService {
           ...List<String>.from(chatData['hiddenFor'] ?? const []),
         };
 
+        // If user is not a participant, they cannot delete the chat
         if (!participantIds.contains(userId)) {
           throw Exception('User is not part of this chat');
         }
 
+        // Add this user to the deletedBy set
         deletedBy.add(userId);
         deletePermanently =
             participantIds.isNotEmpty && participantIds.every(deletedBy.contains);
 
+        // If both users have deleted, mark for permanent deletion. Otherwise, just hide for this user.
         if (deletePermanently) {
           transaction.update(chatRef, {
             'deletedBy': deletedBy.toList(),
@@ -377,6 +387,7 @@ class ChatService {
           return;
         }
 
+        // If not permanently deleting, just hide for this user
         transaction.update(chatRef, {
           'deletedBy': deletedBy.toList(),
           'hiddenFor': FieldValue.delete(),
@@ -384,6 +395,7 @@ class ChatService {
         });
       });
 
+      // If both users have deleted, remove all messages and the chat document
       if (deletePermanently) {
         final messages = await _firestore
             .collection('messages')
@@ -409,7 +421,7 @@ class ChatService {
     }
   }
 
-  //*********************************************************************************
+  //****************************************************************************************************
   // GET WORKER RATINGS - Retrieves all ratings for a worker from subcollections AND legacy ratings
   // Returns a list of ratings for the profile reviews section
   // Supports both new (subcollection) and old (workerRating field) ratings
@@ -445,16 +457,20 @@ class ChatService {
             (id) => id != userId,
             orElse: () => '',
           );
+
+          // Get poster name from participantNames
           final raterName = (posterId.isNotEmpty && participantNames != null) 
               ? (participantNames[posterId] as String?) ?? 'Unknown User'
               : 'Unknown User';
           
+          // Get completion date for legacy rating
           final completedAt = chatData['completionFinalizedAt'];
           DateTime? ratingDate;
           if (completedAt != null && completedAt is Timestamp) {
             ratingDate = completedAt.toDate();
           }
 
+          // Add legacy rating to the list with rater name and date
           ratings.add({
             'rating': legacyRating,
             'raterName': raterName,
@@ -464,7 +480,7 @@ class ChatService {
           print('     ✨ Added LEGACY: rating=$legacyRating, rater=$raterName');
         }
         
-        // ===== NEW: Get ratings from subcollection =====
+        // Get ratings from subcollection
         try {
           final ratingsSnapshot = await _firestore
               .collection('chats')
@@ -472,6 +488,7 @@ class ChatService {
               .collection('ratings')
               .get();
 
+          // Process each rating document in the subcollection
           for (var ratingDoc in ratingsSnapshot.docs) {
             final ratingData = ratingDoc.data();
             final rating = ratingData['rating'] as int?;
@@ -494,6 +511,7 @@ class ChatService {
               ratingDate = createdAt.toDate();
             }
 
+            // Add new rating to the list with rater name and date
             ratings.add({
               'rating': rating,
               'raterName': raterName,
@@ -516,3 +534,4 @@ class ChatService {
     }
   }
 }
+// 537 Lines of code in this file

@@ -11,6 +11,7 @@
  * - Comprehensive logging
  * - Graceful degradation (offline fallback)
  * - Support for 50+ concurrent connections
+ * 
  */
 
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -55,6 +56,7 @@ class SocketService {
     final timestamp = DateTime.now().toIso8601String();
     final logMessage = '[$timestamp] [$level] Socket: $message';
     
+    // Log with different colors based on level (for console readability)
     if (level == 'ERROR') {
       print('🔴 $logMessage');
       if (data != null) print('   Error details: $data');
@@ -84,6 +86,7 @@ class SocketService {
       return;
     }
 
+    // If already connected with a different user, disconnect first
     _userId = userId;
     final serverUrl = _getServerUrl();
     
@@ -104,6 +107,7 @@ class SocketService {
           .build(),
     );
 
+    // Setup event handlers before connecting
     _setupEventHandlers(userId);
     _socket!.connect();
   }
@@ -210,12 +214,14 @@ class SocketService {
       1, 1, 2, 2, 4, 4, 8, 8, 10, 10
     ][_reconnectAttempts - 1];
 
+    // Log reconnection attempt
     _log('INFO', 'Scheduling reconnection', {
       'attempt': _reconnectAttempts,
       'delaySeconds': delaySeconds,
       'userId': userId
     });
 
+    // Cancel any existing timer before scheduling a new one
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(Duration(seconds: delaySeconds), () {
       _log('INFO', 'Attempting reconnection...');
@@ -236,6 +242,7 @@ class SocketService {
       return false;
     }
 
+    // Prepare message data
     final data = {
       'senderId': senderId,
       'receiverId': receiverId,
@@ -267,6 +274,8 @@ class SocketService {
     });
   }
 
+  //***********************************************************************************
+  // STOP TYPING INDICATOR
   void emitStopTyping(String senderId, String receiverId) {
     if (!_isConnected) return;
 
@@ -305,3 +314,4 @@ class SocketService {
     _log('INFO', 'Socket service disposed');
   }
 }
+// 317 Lines of code in this file

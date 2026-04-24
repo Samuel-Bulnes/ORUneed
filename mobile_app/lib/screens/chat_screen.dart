@@ -20,12 +20,13 @@ import '../utils/constants.dart';
 // Screen that displays a one-on-one chat conversation
 // Supports real-time messaging via Socket.io and persistent storage via Firestore
 class ChatScreen extends StatefulWidget {
-  final String chatId;
-  final String otherUserId;
-  final String otherUserName;
-  final String? jobId;
-  final String? jobTitle;
+  final String chatId; // Unique identifier for the chat (Firestore document ID)
+  final String otherUserId; // UID of the other user in the chat
+  final String otherUserName; // Display name of the other user in the chat
+  final String? jobId; // Optional job ID if this chat is related to a specific job
+  final String? jobTitle;  // Optional job title for display in the app bar
 
+  // Constructor requires chat ID and other user's info, job info is optional
   const ChatScreen({
     Key? key,
     required this.chatId,
@@ -40,6 +41,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 //*************************************************************************************
+// State class for ChatScreen, manages chat logic and UI
 class _ChatScreenState extends State<ChatScreen> {
   // Services for chat and real-time messaging
   final ChatService _chatService = ChatService();
@@ -201,6 +203,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+//*****************************************************************************************
+// Clean up resources when the widget is disposed
   @override
   void dispose() {
     // Clean up resources
@@ -212,6 +216,8 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+//**********************************************************************************
+// Builds the main UI of the chat screen
   @override
   Widget build(BuildContext context) {
     // Verify user is logged in
@@ -221,14 +227,16 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    //**********************************************************************************
+    //*************************************************************************************
+    // Listen to chat document for real-time updates on completion status and participants
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: _chatService.getChatStream(widget.chatId),
       builder: (context, chatSnapshot) {
-        final chatData = chatSnapshot.data?.data() ?? {};
+        final chatData = chatSnapshot.data?.data() ?? {}; // Get chat data or default to empty map
         final participantIds = List<String>.from(
           chatData['participantIds'] ?? [_currentUserId!, widget.otherUserId],
         );
+        // Get completion confirmations and status from chat data
         final confirmations =
             Map<String, dynamic>.from(chatData['completionConfirmations'] ?? {});
         final completionRequested = chatData['completionRequested'] == true;
@@ -237,6 +245,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final bothConfirmed = participantIds.isNotEmpty &&
             participantIds.every((id) => confirmations[id] == true);
 
+        // Determine if this chat has job context based on jobId in chat data or widget
         final effectiveJobId = (chatData['jobId'] as String?) ?? widget.jobId;
         final hasJobContext =
             effectiveJobId != null && effectiveJobId.trim().isNotEmpty;
@@ -245,11 +254,13 @@ class _ChatScreenState extends State<ChatScreen> {
         final workerIdInChat = chatData['workerId'] as String?;
         final isWorker =
             workerIdInChat == null || _currentUserId == workerIdInChat;
-
+        
+        // Determine who requested completion for display purposes
         final requestedByName = requestedById == _currentUserId
             ? 'You'
             : widget.otherUserName;
 
+        // Build the main scaffold with app bar and chat UI
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
@@ -269,6 +280,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     fontSize: 18,
                   ),
                 ),
+
                 // Display job title if this chat is related to a job
                 if (widget.jobTitle != null)
                   Text(
@@ -281,6 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
             actions: [
+
               // Only the worker can initiate completion; poster sees 'Completed' once done
               if (hasJobContext && (isWorker || bothConfirmed))
                 Padding(
@@ -310,6 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
 
           //**********************************************************************************
+          // Main body of the chat screen
           body: Column(
             children: [
               if (hasJobContext && (completionRequested || bothConfirmed))
@@ -422,6 +436,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
+    //******************************************************************************************
+    // If completion is requested but current user hasn't confirmed yet, show confirmation card
     if (completionRequested && !currentConfirmed) {
       return Container(
         width: double.infinity,
@@ -488,6 +504,8 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
+    //******************************************************************************************
+    // If completion is requested and current user has already confirmed, show waiting card
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -513,7 +531,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  //**********************************************************************************
+  //**********************************************************************************************************
   // Completion confirmation dialog — workers just confirm, only the poster rates
   Future<void> _showCompletionDialog({
     required bool completionRequested,
@@ -521,6 +539,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }) async {
     int tempRating = _selectedSurveyRating;
 
+    // Show completion confirmation dialog with rating option for poster and just confirmation for worker
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -591,7 +610,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  //**********************************************************************************
+  //*******************************************************************************************************
   // Submits completion confirmation and only completes job when both sides confirm
   Future<void> _submitCompletion({
     required int rating,
@@ -601,6 +620,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() => _isSubmittingCompletion = true);
 
+    // If completion hasn't been requested yet, request it first. Then confirm completion for current user.
     try {
       if (!completionRequested) {
         await _chatService.requestJobCompletion(
@@ -616,7 +636,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
 
-    } catch (e) {
+    } catch (e) { // Handle errors gracefully and show feedback to the user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -785,3 +805,4 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+// 808 lines of code in this file

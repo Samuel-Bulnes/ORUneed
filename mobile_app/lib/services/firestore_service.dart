@@ -43,6 +43,7 @@ class FirestoreService {
           .limit(pageSize)
           .get();
 
+      // Convert documents to JobModel and filter in memory for open jobs
       final jobs = query.docs
           .map((doc) => JobModel.fromMap(doc.data()))
           .where((job) => job.status == 'open')  // Filter in memory (handles missing status field)
@@ -65,9 +66,9 @@ class FirestoreService {
   // Loads next 20 jobs using cursor-based pagination (startAfterDocument)
   Future<Map<String, dynamic>> getOpenJobsNextPage(
     DocumentSnapshot lastDocument, {
-    int pageSize = 20,
+    int pageSize = 20,    
   }) async {
-    try {
+    try { // Ensure lastDocument is provided for pagination
       final query = await _firestore
           .collection('jobs')
           .orderBy('createdAt', descending: true)
@@ -75,11 +76,13 @@ class FirestoreService {
           .limit(pageSize)
           .get();
 
+      // Convert documents to JobModel and filter in memory for open jobs
       final jobs = query.docs
           .map((doc) => JobModel.fromMap(doc.data()))
           .where((job) => job.status == 'open')  // Filter in memory (handles missing status field)
           .toList();
 
+      // Return jobs and last document for next page cursor
       return {
         'jobs': jobs,
         'lastDocument': query.docs.isNotEmpty ? query.docs.last : null,
@@ -268,3 +271,4 @@ class FirestoreService {
     }
   }
 }
+// 274 Lines of code in this file
